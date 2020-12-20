@@ -223,6 +223,7 @@ class Exchange_system(tk.Frame):
             self.user_info = sheet.row_values(user_index)       # 使用者帳戶資訊
             self.user_account = self.user_info[1]               # 使用者帳號
             self.user_name = self.user_info[3]                  # 使用者帳戶名稱
+            self.user_balance = self.user_info[4]               # 使用者帳戶餘額
             self.grid()
             self.create_widgets()
 
@@ -235,7 +236,7 @@ class Exchange_system(tk.Frame):
             self.butn_refresh.grid(row=1, column=0, sticky=tk.W)
 
             self.butn_create_room = tk.Button(self, text='創建房間',
-                                              command=lambda: self.create_room_page(self.user_account, self.user_name))    # 創建新房間的按紐
+                                              command=lambda: self.create_room_page(self.user_account, self.user_name, self.user_balance))    # 創建新房間的按紐
             self.butn_create_room.grid(row=2, column=0, sticky=tk.W)
 
             caption_columns = self.special_exchange_room.row_values(1)[1:7]    # 定義每一列
@@ -292,14 +293,14 @@ class Exchange_system(tk.Frame):
                 if enter_room:
                     # 沒有密碼
                     if room_password == '':
-                        self.sheet_of_room.append_row([self.user_account, self.user_name, 0])    # 將使用者資料加入房間的表單
+                        self.sheet_of_room.append_row([self.user_account, self.user_name, 0, self.user_balance])    # 將使用者資料加入房間的表單
                         self.special_exchange_room.update_cell(room_index, 6, str(people + 1))   # 更新房間人數
                         self.destroy()
-                        self.room_page(room_mode, room_name, room_number, people_limit)          # 進入房間頁面
+                        self.room_page(room_mode, room_name, room_number, people_limit, self.user_account)    # 進入房間頁面
                     # 有密碼，跳到房間密碼輸入頁面
                     else:
                         self.destroy()
-                        self.room_password_page = self.Room_password_page(room_password, room_index, people, self.user_account,
+                        self.room_password_page = self.Room_password_page(room_password, room_index, people, self.user_account, self.user_balance,
                                                                           self.user_name, room_mode, room_name, room_number, people_limit)
                         self.master.title("Room Password")
                         self.room_password_page.mainloop()
@@ -312,7 +313,7 @@ class Exchange_system(tk.Frame):
 
         # 房間密碼輸入頁面
         class Room_password_page(tk.Frame):
-            def __init__(self, room_password, room_index, people, user_account, user_name, room_mode, room_name, room_number, people_limit):
+            def __init__(self, room_password, room_index, people, user_account, user_balance, user_name, room_mode, room_name, room_number, people_limit):
                 tk.Frame.__init__(self)
                 self.sheet_of_room = NTU_Coin.worksheet('Room %s' % (room_number))    # 該房間的表單
                 self.special_exchange_room = NTU_Coin.get_worksheet(3)                # 特殊交換的房間表單
@@ -320,6 +321,7 @@ class Exchange_system(tk.Frame):
                 self.room_index = room_index          # 房間索引值
                 self.people = people                  # 房間人數
                 self.user_account = user_account      # 使用者帳號
+                self.user_balance = user_balance      # 使用者餘額
                 self.user_name = user_name            # 使用者帳戶名稱
                 self.room_mode = room_mode            # 房間模式
                 self.room_name = room_name            # 房間名稱
@@ -346,28 +348,29 @@ class Exchange_system(tk.Frame):
                 # 密碼正確
                 if self.password_entry.get() == self.room_password:
                     self.destroy()
-                    self.sheet_of_room.append_row([self.user_account, self.user_name, 0])    # 將使用者資料加入房間的表單
+                    self.sheet_of_room.append_row([self.user_account, self.user_name, 0, self.user_balance])    # 將使用者資料加入房間的表單
                     self.special_exchange_room.update_cell(self.room_index, 6, str(self.people + 1))    # 更新房間人數
-                    Exchange_system.Special_exchange.room_page(self.room_mode, self.room_name,
-                                                               self.room_number, self.people_limit)     # 進入房間頁面
+                    Exchange_system.Special_exchange.room_page(self.room_mode, self.room_name, self.room_number,
+                                                               self.people_limit, self.user_account)    # 進入房間頁面
                 # 密碼錯誤
                 else:
                     self.lab_password_entry_error.configure(text='密碼錯誤')    # 顯示房間密碼錯誤訊息
 
         # 進入創建房間的頁面
-        def create_room_page(self, user_account, user_name):
+        def create_room_page(self, user_account, user_name, user_balance):
             self.destroy()
-            self.create_page = self.Create_room(user_account, user_name)
+            self.create_page = self.Create_room(user_account, user_name, user_balance)
             self.master.title("Create a Room")
             self.create_page.mainloop()
 
         # 創建房間的頁面
         class Create_room(tk.Frame):
-            def __init__(self, user_account, user_name):
+            def __init__(self, user_account, user_name, user_balance):
                 tk.Frame.__init__(self)
                 self.special_exchange_room = NTU_Coin.get_worksheet(3)    # 特殊交換的房間表單
                 self.user_account = user_account     # 使用者帳號
                 self.user_name = user_name    # 使用者帳戶名稱
+                self.user_balance = user_balance     # 使用者餘額
                 self.grid()
                 self.create_widgets()
 
@@ -519,7 +522,8 @@ class Exchange_system(tk.Frame):
                                                                 rows=str(self.people_limit + 3), cols='5')    # 創建該房間的表單
                     self.upload_room()    # 上傳房間資料
                     self.destroy()
-                    Exchange_system.Special_exchange.room_page(self.room_mode, self.room_name, self.room_number, self.people_limit)    # 進入房間
+                    Exchange_system.Special_exchange.room_page(self.room_mode, self.room_name, self.room_number,
+                                                               self.people_limit, self.user_account)    # 進入房間
 
             # 上傳房間資料
             def upload_room(self):
@@ -529,26 +533,29 @@ class Exchange_system(tk.Frame):
                               self.password_or_not, str(self.people), str(self.people_limit), str(self.password)]
                 self.special_exchange_room.append_row(insert_row)
                 # 新增紀錄到該房間的表單
-                info_headings = ['模式', '號碼', '名稱', '人數上限', '密碼']
+                info_headings = ['模式', '號碼', '名稱', '人數上限']
                 info = [self.room_mode, self.room_number, self.room_name,
-                        str(self.people_limit), str(self.password)]
-                user_headings = ['帳戶', '名稱', '分數']
-                user = [self.user_account, self.user_name, 0]
+                        str(self.people_limit)]
+                user_headings = ['帳戶', '名稱', '分數', '餘額']
+                user = [self.user_account, self.user_name, 0, self.user_balance]
                 insert_rows = [info_headings, info, user_headings, user]
                 self.sheet_of_room.append_rows(insert_rows)
 
         @staticmethod
         # 進入房間頁面
-        def room_page(room_mode, room_name, room_number, people_limit):
-            room_page = Exchange_system.Special_exchange.Room(room_mode, room_name, room_number, people_limit)
+        def room_page(room_mode, room_name, room_number, people_limit, user_account):
+            room_page = Exchange_system.Special_exchange.Room(room_mode, room_name, room_number, people_limit, user_account)
             room_page.master.title('Room %s' % (room_number))
             room_page.mainloop()
 
         # 房間頁面
         class Room(tk.Frame):
-            def __init__(self, room_mode, room_name, room_number, people_limit):
+            def __init__(self, room_mode, room_name, room_number, people_limit, user_account):
                 tk.Frame.__init__(self)
                 self.special_exchange_room = NTU_Coin.get_worksheet(3)    # 特殊交換的房間表單
+                self.sheet_of_room = NTU_Coin.worksheet('Room %s' % (room_number))    # 該房間的表單
+                self.member = self.sheet_of_room.col_values(2)[3:]        # 房間成員帳戶名稱名單
+                self.user_account = user_account    # 使用者帳號
                 self.room_mode = room_mode          # 房間模式
                 self.room_name = room_name          # 房間名稱
                 self.room_number = room_number      # 房間號碼
@@ -561,12 +568,53 @@ class Exchange_system(tk.Frame):
 
             # 設定麻將介面
             def create_widgets_mj(self):
-                print('麻將')
+                content = '房間模式: ' + self.room_mode
+                self.lab_room_mode = tk.Label(self, text=content)      # 房間模式
+                self.lab_room_mode.grid(row=0, column=0, sticky=tk.W)
+
+                content = '房間號碼: ' + self.room_number
+                self.lab_room_number = tk.Label(self, text=content)    # 房間號碼
+                self.lab_room_number.grid(row=0, column=1, sticky=tk.W)
+
+                content = '房間名稱: ' + self.room_name
+                self.lab_room_name = tk.Label(self, text=content)      # 房間名稱
+                self.lab_room_name.grid(row=0, column=2, sticky=tk.W)
+
+                self.butn_refresh = tk.Button(self, text='重整房間', command=self.refresh_room)    # 重整房間按鈕
+                self.butn_refresh.grid(row=0, column=3, sticky=tk.NW + tk.SE)
+
+                self.butn_leave = tk.Button(self, text='離開房間', command=self.leave_room)        # 離開房間按鈕
+                self.butn_leave.grid(row=0, column=4, sticky=tk.NW + tk.SE)
 
             # 設定分錢介面
             def create_widgets_share(self):
                 print('分錢')
 
+            # 重整房間頁面
+            def refresh_room(self):
+                self.destroy()
+                Exchange_system.Special_exchange.room_page(self.room_mode, self.room_name, self.room_number,
+                                                           self.people_limit, self.user_account)
+
+            # 離開房間
+            def leave_room(self):
+                self.special_exchange_room = NTU_Coin.get_worksheet(3)    # 特殊交換的房間表單
+                self.sheet_of_room = NTU_Coin.worksheet('Room %s' % (self.room_number))       # 該房間的表單
+                self.account = self.sheet_of_room.col_values(1)[3:]       # 房間成員帳號名單
+                self.room = self.special_exchange_room.find(self.room_number)    # 該房間
+                self.user = self.sheet_of_room.find(self.user_account)           # 該使用者
+                self.people = int(self.special_exchange_room.cell(self.room.row, 6).value)    # 房間人數
+
+                # 房間只剩下自己
+                if len(self.account) == 1:
+                    NTU_Coin.del_worksheet(self.sheet_of_room)    # 刪除該房間的表單
+                    self.special_exchange_room.delete_rows(self.room.row)    # 刪除該房間的資訊
+                # 房間還有其他使用者
+                else:
+                    self.sheet_of_room.delete_rows(self.user.row)    # 刪除該使用者的資訊
+                    self.special_exchange_room.update_cell(self.room.row, 6, str(self.people - 1))    # 更新房間人數
+
+                special_exchange_page(self)    # 回到特殊交換系統
 
 # 進入交換主頁
 def exchange_homepage(window):
