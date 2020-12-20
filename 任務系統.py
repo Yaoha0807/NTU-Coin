@@ -61,6 +61,7 @@ def pay(list):
     # 將交易開始與結束移轉到紀錄系統
     # 將交易金額記錄到使用者即時資料庫
     mission_name = list[0][2]
+    mission_content = list[0][3]
     provider = list[0][1]
     accepter = list[2][1]
     accounts_payable = list[0][4]
@@ -80,15 +81,15 @@ def pay(list):
     user_info.update_cell(user_info_row_accept,5,balance_accepter)
     
 
-    exchange_records = client.open("NTU Coin").worksheet("Exchange Record")
+    mission_records = client.open("NTU Coin").worksheet("Mission Record")
     # 紀錄登錄
-    index = exchange_records.row_count +1
-    cred1 = [index, "norm-", provider, accepter,-int(accounts_payable),balance, pay_time]
-    cred2 = [index+1, "norm+", accepter, provider, int(accounts_receivable), balance_accepter, pay_time]
-    exchange_records.append_row(cred1)
-    exchange_records.append_row(cred2)
+    index = len(mission_records.col_values(2))+1
+    cred1 = [index, "norm-",provider, accepter,-int(accounts_payable), pay_time, mission_name, mission_content]
+    cred2 = [index+1, "norm+",accepter, provider,"+" +str(int(accounts_receivable)), pay_time, mission_name, mission_content]
+    mission_records.append_row(cred1)
+    mission_records.append_row(cred2)
 
-# establish_mission("b09704063@ntu.edu.tw","i am so tired","it's fucking 1:49","10000000")
+# establish_mission("b09704063@ntu.edu.tw","i am so stupid","it's 1:30","10")
 # accept_mission("bb@ntu.edu.tw","3")
 # finish_mission("bb@ntu.edu.tw", "3")
 # pay(transaction_phase)
@@ -99,23 +100,23 @@ def enough_coins(provider):
         return False
     else: 
         return True 
-# 準備好介面所需資訊給無進化接手
+# 準備好介面所需資訊給任務介面
 def quest_summary_info():
     display_list = []
-    def available_or_not(status):
-        if status != "on-going":
-            return False
-        else:
-            return True
     mission_summary = client.open("NTU Coin").worksheet("Mission")
     for i in range(mission_summary.row_count):
-        if available_or_not(mission_summary.cell(i,6).value) == True:
+        if mission_summary.cell(i,6) == 'on-going':
             time = mission_summary.cell(i,7).value
             account = mission_summary.cell(i,1).value
             task = mission_summary.cell(i,2).value
             coins = mission_summary.cell(i,5).value
             lst = [time, account, task, coins]
             display_list.append(lst)
-        else:
-            pass
     return display_list
+# 按了任務之後的動作
+def click_accept_mission(mission_index):
+    ficher = client.open("NTU Coin").worksheet("Mission")
+    mission_row = ficher.find(mission_index).row
+    lst = ficher.row_values(mission_row)
+    return lst
+            
