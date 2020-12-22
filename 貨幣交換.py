@@ -8,6 +8,7 @@ import tkinter.scrolledtext
 from tkinter import ttk
 import datetime
 import random
+from PIL import Image, ImageTk
 
 
 # 交換系統介面
@@ -224,23 +225,67 @@ class Exchange_system(tk.Frame):
             self.user_account = self.user_info[1]               # 使用者帳號
             self.user_name = self.user_info[3]                  # 使用者帳戶名稱
             self.user_balance = self.user_info[4]               # 使用者帳戶餘額
+            self.f_title = tk.font.Font(size=30, family='Microsoft JhengHei', weight='bold')    # 標題字形
+            self.f_lab = tk.font.Font(size=12, family='Microsoft JhengHei', weight='bold')      # 一般字形
+            self.f_con = tk.font.Font(size=10, family='Microsoft JhengHei')    # 內容字形
             self.grid()
             self.create_widgets()
 
+        @staticmethod
+        # 設定背景顏色及文字顏色
+        def set_bg_fg(widgets_list):
+            for widget in widgets_list:
+                widget.configure(bg='#363636', fg='white')
+
+        @staticmethod
+        # 設定錯誤訊息的背景顏色及文字顏色
+        def set_bg_fg_error(widgets_error_list):
+            for widget in widgets_error_list:
+                widget.configure(bg='#363636', fg='orange')
+
+        @staticmethod
+        # 設定使用者資訊的背景顏色及文字顏色
+        def set_bg_fg_user(user_info_list):
+            for user in user_info_list:
+                user.configure(bg='#363636', fg='dark orange2')
+
         # 設定介面
         def create_widgets(self):
-            self.butn_return = tk.Button(self, text='返回交換主頁', command=lambda: exchange_homepage(self))    # 返回交換主頁按紐
-            self.butn_return.grid(row=0, column=0, sticky=tk.W)
+            self.widgets_list = []    # 部件清單
 
-            self.butn_refresh = tk.Button(self, text='重新整理', command=self.refresh_room_sheet)      # 重新載入房間表單的按紐
-            self.butn_refresh.grid(row=1, column=0, sticky=tk.W)
+            self.lab_title = tk.Label(self, text='特殊交換系統 - 房間列表', font=self.f_title)     # 標題
+            self.lab_title.grid(row=0, column=0, columnspan=3, sticky=tk.SW + tk.NE)
+            self.widgets_list.append(self.lab_title)           # 加入部件清單
 
-            self.butn_create_room = tk.Button(self, text='創建房間',
+            self.butn_return = tk.Button(self, text='返回交換主頁', height=1, width=12, font=self.f_lab,
+                                         command=lambda: exchange_homepage(self))    # 返回交換主頁按紐
+            self.butn_return.grid(row=0, column=0, sticky=tk.SW + tk.NE)
+            self.widgets_list.append(self.butn_return)         # 加入部件清單
+
+            self.butn_refresh = tk.Button(self, text='重新整理', height=1, width=12, font=self.f_lab,
+                                          command=self.refresh_room_sheet)           # 重新載入房間表單的按紐
+            self.butn_refresh.grid(row=1, column=0, sticky=tk.SW + tk.NE)
+            self.widgets_list.append(self.butn_refresh)        # 加入部件清單
+
+            self.butn_create_room = tk.Button(self, text='創建房間', height=1, width=12, font=self.f_lab,
                                               command=lambda: self.create_room_page(self.user_account, self.user_name, self.user_balance))    # 創建新房間的按紐
-            self.butn_create_room.grid(row=2, column=0, sticky=tk.W)
+            self.butn_create_room.grid(row=2, column=0, sticky=tk.SW + tk.NE)
+            self.widgets_list.append(self.butn_create_room)    # 加入部件清單
 
+            self.lab_blank = tk.Label(self, text='', font=self.f_lab)
+            self.lab_blank.grid(row=3, column=0, rowspan=38, sticky=tk.SW + tk.NE)
+            self.widgets_list.append(self.lab_blank)           # 加入部件清單
+
+            ttk.Style().configure('Treeview.Heading', background='#363636', font=self.f_lab)
             caption_columns = self.special_exchange_room.row_values(1)[1:7]    # 定義每一列
-            self.room_sheet = ttk.Treeview(self, show='headings', columns=caption_columns)    # 房間表單
+            self.room_sheet = ttk.Treeview(self, show='headings', columns=caption_columns, height=30)    # 房間表單
+            # 調整列距
+            self.room_sheet.column('模式', width=105, anchor='center')
+            self.room_sheet.column('號碼', width=150, anchor='center')
+            self.room_sheet.column('名稱', width=225, anchor='center')
+            self.room_sheet.column('是否需要密碼?', width=140, anchor='center')
+            self.room_sheet.column('人數', width=105, anchor='center')
+            self.room_sheet.column('人數上限', width=150, anchor='center')
             # 製作表頭
             for i in caption_columns:
                 self.room_sheet.heading(i, text=i)
@@ -250,19 +295,22 @@ class Exchange_system(tk.Frame):
                 mode = room_info[1]       # 房間模式
                 room_number = room_info[2]    # 房間號碼
                 room_name = room_info[3]      # 房間名稱
-                need_password_or_not = room_info[4]    # 是否需要密碼?
+                need_password_or_not = room_info[4]      # 是否需要密碼?
                 people = room_info[5]         # 房間人數
                 people_limit = room_info[6]   # 房間人數上限
                 tmp = [mode, room_number, room_name, need_password_or_not, people, people_limit]
-                self.room_sheet.insert('', 'end', values=tmp)
-                self.room_sheet.grid(row=3, column=0, sticky=tk.SW + tk.NE)
+                self.room_sheet.insert('', 'end', values=tmp, tags=('font'))
+                self.room_sheet.tag_configure('font', font=self.f_con)
+                self.room_sheet.grid(row=1, column=1, rowspan=40, sticky=tk.SW + tk.NE)
 
             self.scroll_bar = tk.Scrollbar(self)    # 滑動卷軸
-            self.scroll_bar.grid(row=3, column=2, sticky=tk.SW + tk.NE)
+            self.scroll_bar.grid(row=1, column=2, rowspan=40, sticky=tk.SW + tk.NE)
             self.scroll_bar.config(command=self.room_sheet.yview)      # 連動卷軸跟房間資訊表單
             self.scroll_bar.set(self.scroll_bar.get()[0], self.scroll_bar.get()[1])
 
             self.room_sheet.bind('<Double-1>', self.treeview_click)    # 連動右鍵雙擊跟進入房間
+
+            self.set_bg_fg(self.widgets_list)    # 更改物件的文字顏色跟背景顏色
 
         # 重新載入房間表單
         def refresh_room_sheet(self):
@@ -315,6 +363,8 @@ class Exchange_system(tk.Frame):
         class Room_password_page(tk.Frame):
             def __init__(self, room_password, room_index, people, user_account, user_balance, user_name, room_mode, room_name, room_number, people_limit):
                 tk.Frame.__init__(self)
+                self.f_title = tk.font.Font(size=30, family='Microsoft JhengHei', weight='bold')    # 標題字形
+                self.f_lab = tk.font.Font(size=12, family='Microsoft JhengHei', weight='bold')      # 一般字形
                 self.sheet_of_room = NTU_Coin.worksheet('Room %s' % (room_number))    # 該房間的表單
                 self.special_exchange_room = NTU_Coin.get_worksheet(3)                # 特殊交換的房間表單
                 self.room_password = room_password    # 房間密碼
@@ -332,16 +382,39 @@ class Exchange_system(tk.Frame):
 
             # 設定介面
             def create_widgets(self):
-                self.lab_password = tk.Label(self, text='房間密碼')        # 房間密碼
-                self.password_entry = tk.Entry(self)    # 讓使用者輸入房間密碼
-                self.lab_password_entry_error = tk.Label(self, text='')    # 房間密碼錯誤訊息
-                self.butn_commit = tk.Button(self, text='確認', command=self.password_comfirm)    # 確認按鈕
-                self.butn_cancel = tk.Button(self, text='返回', command=lambda: special_exchange_page(self))    # 返回按鈕
-                self.lab_password.grid(row=0, column=0, sticky=tk.E + tk.W)
-                self.password_entry.grid(row=0, column=1, sticky=tk.E + tk.W)
-                self.lab_password_entry_error.grid(row=1, column=1, sticky=tk.E + tk.W)
-                self.butn_commit.grid(row=2, column=0, sticky=tk.E + tk.W)
-                self.butn_cancel.grid(row=2, column=1, sticky=tk.E + tk.W)
+                self.widgets_list = []    # 部件清單
+                self.widgets_error_list = []    # 錯誤訊息清單
+
+                self.lab_blank1 = tk.Label(self, text='', width=58, height=10)    # 空白區域
+                self.lab_blank1.grid(row=0, column=0, columnspan=4, sticky=tk.SE + tk.NW)
+                self.widgets_list.append(self.lab_blank1)    # 加入部件清單
+
+                self.lab_blank2 = tk.Label(self, text='', width=58, height=15)    # 空白區域
+                self.lab_blank2.grid(row=1, column=0, rowspan=4, sticky=tk.SE + tk.NW)
+                self.widgets_list.append(self.lab_blank2)    # 加入部件清單
+
+                self.lab_password = tk.Label(self, text='房間密碼', font=self.f_title)        # 房間密碼
+                self.password_entry = tk.Entry(self, show='*', font=self.f_lab)    # 讓使用者輸入房間密碼
+                self.lab_password_entry_error = tk.Label(self, text='', font=self.f_lab)    # 房間密碼錯誤訊息
+                self.lab_password.grid(row=1, column=1, columnspan=2, sticky=tk.SE + tk.NW)
+                self.password_entry.grid(row=2, column=1, columnspan=2, sticky=tk.SE + tk.NW)
+                self.lab_password_entry_error.grid(row=3, columnspan=2, column=1, sticky=tk.SE + tk.NW)
+                # 加入部件清單
+                self.widgets_list.append(self.lab_password)
+                self.widgets_error_list.append(self.lab_password_entry_error)
+
+                self.butn_commit = tk.Button(self, text='確認', font=self.f_lab,
+                                             command=self.password_comfirm)    # 確認按鈕
+                self.butn_cancel = tk.Button(self, text='返回', font=self.f_lab,
+                                             command=lambda: special_exchange_page(self))    # 返回按鈕
+                self.butn_commit.grid(row=4, column=1, sticky=tk.SE + tk.NW)
+                self.butn_cancel.grid(row=4, column=2, sticky=tk.SE + tk.NW)
+                # 加入部件清單
+                self.widgets_list.append(self.butn_commit)
+                self.widgets_list.append(self.butn_cancel)
+
+                Exchange_system.Special_exchange.set_bg_fg(self.widgets_list)    # 更改物件的文字顏色跟背景顏色
+                Exchange_system.Special_exchange.set_bg_fg_error(self.widgets_error_list)    # 更改錯誤訊息的文字顏色跟背景顏色
 
             # 檢查密碼
             def password_comfirm(self):
@@ -367,6 +440,9 @@ class Exchange_system(tk.Frame):
         class Create_room(tk.Frame):
             def __init__(self, user_account, user_name, user_balance):
                 tk.Frame.__init__(self)
+                self.f_title = tk.font.Font(size=20, family='Microsoft JhengHei', weight='bold')    # 標題字形
+                self.f_b_title = tk.font.Font(size=35, family='Microsoft JhengHei', weight='bold')  # 大標題字形
+                self.f_lab = tk.font.Font(size=12, family='Microsoft JhengHei', weight='bold')      # 一般字形
                 self.special_exchange_room = NTU_Coin.get_worksheet(3)    # 特殊交換的房間表單
                 self.user_account = user_account     # 使用者帳號
                 self.user_name = user_name    # 使用者帳戶名稱
@@ -376,85 +452,128 @@ class Exchange_system(tk.Frame):
 
             # 設定介面
             def create_widgets(self):
-                self.lab_room_number = tk.Label(self, text='房間號碼')    # 房間號碼
+                self.widgets_list = []    # 部件清單
+                self.widgets_error_list = []    # 錯誤訊息清單
+
+                self.lab_title = tk.Label(self, text='創建房間', width=25, height=3, font=self.f_b_title)
+                self.lab_title.grid(row=0, column=1, columnspan=3, sticky=tk.SE + tk.NW)
+                self.widgets_list.append(self.lab_title)     # 加入部件清單
+
+                self.lab_blank2 = tk.Label(self, text='', width=20, height=5)
+                self.lab_blank2.grid(row=0, column=0, rowspan=10, sticky=tk.SE + tk.NW)
+                self.widgets_list.append(self.lab_blank2)     # 加入部件清單
+
+                self.lab_blank3 = tk.Label(self, text='', width=20, height=25)
+                self.lab_blank3.grid(row=1, column=2, rowspan=9, sticky=tk.SE + tk.NW)
+                self.widgets_list.append(self.lab_blank3)     # 加入部件清單
+
+                self.lab_blank4 = tk.Label(self, text='')
+                self.lab_blank4.grid(row=3, column=1, sticky=tk.SE + tk.NW)
+                self.widgets_list.append(self.lab_blank4)     # 加入部件清單
+
+                self.lab_room_number = tk.Label(self, text='房間號碼', width=15, font=self.f_title)    # 房間號碼
                 number = random.randint(1, 10000)        # 亂數產生號碼
                 self.number = "{:0>5d}".format(number)   # 不足五位數則前方補零
                 # 避免重複房間號碼
                 while self.number in self.special_exchange_room.col_values(3):
                     number = random.randint(1, 10000)
                     self.number = "{:0>5d}".format(number)
-                self.lab_number = tk.Label(self, text=self.number)        # 以亂數為房間號碼
-                self.lab_room_number.grid(row=0, column=0, sticky=tk.E + tk.W)
-                self.lab_number.grid(row=1, column=0, sticky=tk.E + tk.W)
+                self.lab_number = tk.Label(self, text=self.number, font=self.f_lab)        # 以亂數為房間號碼
+                self.lab_room_number.grid(row=1, column=1, sticky=tk.SE + tk.NW)
+                self.lab_number.grid(row=2, column=1, sticky=tk.SE + tk.NW)
+                # 加入部件清單
+                self.widgets_list.append(self.lab_room_number)
+                self.widgets_list.append(self.lab_number)
 
-                self.lab_room_name = tk.Label(self, text='房間名稱')      # 房間名稱
-                self.room_name_entry = tk.Entry(self)    # 讓使用者輸入房間名稱
-                self.lab_room_name.grid(row=2, column=0, sticky=tk.E + tk.W)
-                self.room_name_entry.grid(row=3, column=0, sticky=tk.E + tk.W)
+                self.lab_room_name = tk.Label(self, text='房間名稱', font=self.f_title)    # 房間名稱
+                self.room_name_entry = tk.Entry(self, font=self.f_lab)    # 讓使用者輸入房間名稱
+                self.lab_room_name.grid(row=4, column=1, sticky=tk.SE + tk.NW)
+                self.room_name_entry.grid(row=5, column=1, sticky=tk.SE + tk.NW)
+                # 加入部件清單
+                self.widgets_list.append(self.lab_room_name)
 
-                self.lab_room_name_error = tk.Label(self, text='')        # 房間名稱錯誤訊息
-                self.lab_room_name_error.grid(row=4, column=0, sticky=tk.E + tk.W)
+                self.lab_room_name_error = tk.Label(self, text='', font=self.f_lab)        # 房間名稱錯誤訊息
+                self.lab_room_name_error.grid(row=6, column=1, sticky=tk.SE + tk.NW)
+                self.widgets_error_list.append(self.lab_room_name_error)        # 加入部件清單
 
-                self.lab_room_mode = tk.Label(self, text='房間模式')           # 房間模式
+                self.lab_room_mode = tk.Label(self, text='房間模式', font=self.f_title)    # 房間模式
                 self.radioValue = tk.IntVar()
-                self.room_mode1 = tk.Radiobutton(self, text='麻將', variable=self.radioValue, value=1, command=self.choose_mode)    # 房間模式-麻將
-                self.room_mode2 = tk.Radiobutton(self, text='分錢', variable=self.radioValue, value=2, command=self.choose_mode)    # 房間模式-分錢
+                self.room_mode1 = tk.Radiobutton(self, text='麻將', variable=self.radioValue, value=1, command=self.choose_mode, font=self.f_lab)    # 房間模式-麻將
+                self.room_mode2 = tk.Radiobutton(self, text='分錢', variable=self.radioValue, value=2, command=self.choose_mode, font=self.f_lab)    # 房間模式-分錢
                 self.room_mode = ''    # 預設為無
-                self.lab_room_mode.grid(row=5, column=0, sticky=tk.E + tk.W)
-                self.room_mode1.grid(row=6, column=0, sticky=tk.E + tk.W)
-                self.room_mode2.grid(row=7, column=0, sticky=tk.E + tk.W)
+                self.lab_room_mode.grid(row=7, column=1, sticky=tk.SE + tk.NW)
+                self.room_mode1.grid(row=8, column=1, sticky=tk.SE + tk.NW)
+                self.room_mode2.grid(row=9, column=1, sticky=tk.SE + tk.NW)
+                # 加入部件清單
+                self.widgets_list.append(self.lab_room_mode)
+                self.widgets_list.append(self.room_mode1)
+                self.widgets_list.append(self.room_mode2)
 
-                self.lab_people_limit = tk.Label(self, text='人數上限')    # 房間人數上限
-                self.people_limit_entry = tk.Entry(self)    # 讓使用者輸入人數上限
-                self.lab_people_limit.grid(row=0, column=1, sticky=tk.E + tk.W)
-                self.people_limit_entry.grid(row=1, column=1, sticky=tk.E + tk.W)
+                self.lab_people_limit = tk.Label(self, text='人數上限', width=15, font=self.f_title)    # 房間人數上限
+                self.people_limit_entry = tk.Entry(self, font=self.f_lab)    # 讓使用者輸入人數上限
+                self.lab_people_limit.grid(row=1, column=3, sticky=tk.SE + tk.NW)
+                self.people_limit_entry.grid(row=2, column=3, sticky=tk.SE + tk.NW)
+                # 加入部件清單
+                self.widgets_list.append(self.lab_people_limit)
 
-                self.lab_people_limit_error = tk.Label(self, text='')      # 房間人數上限錯誤訊息
-                self.lab_people_limit_error.grid(row=2, column=1, sticky=tk.E + tk.W)
+                self.lab_people_limit_error = tk.Label(self, text='', font=self.f_lab)      # 房間人數上限錯誤訊息
+                self.lab_people_limit_error.grid(row=3, column=3, sticky=tk.SE + tk.NW)
+                self.widgets_error_list.append(self.lab_people_limit_error)      # 加入部件清單
 
                 self.checkVar = tk.IntVar()
-                self.check_box_password = tk.Checkbutton(self, text='設定密碼', variable=self.checkVar, command=self.set_password)    # 讓使用者選擇是否要設密碼
-                self.lab_password = tk.Label(self, text='密碼')            # 密碼
-                self.password_entry = tk.Entry(self, state='disable')      # 輸入密碼的欄位，預設為不開啟
+                self.check_box_password = tk.Checkbutton(self, text='設定密碼', variable=self.checkVar, command=self.set_password, font=self.f_lab)    # 讓使用者選擇是否要設密碼
+                self.lab_password = tk.Label(self, text='密碼', font=self.f_title)          # 密碼
+                self.password_entry = tk.Entry(self, state='disable', font=self.f_lab)      # 輸入密碼的欄位，預設為不開啟
                 self.password_or_not = '否'    # 預設為沒有密碼
-                self.check_box_password.grid(row=3, column=1, sticky=tk.E + tk.W)
-                self.lab_password.grid(row=4, column=1, sticky=tk.E + tk.W)
-                self.password_entry.grid(row=5, column=1, sticky=tk.E + tk.W)
+                self.check_box_password.grid(row=5, column=3, sticky=tk.SE + tk.NW)
+                self.lab_password.grid(row=4, column=3, sticky=tk.SE + tk.NW)
+                self.password_entry.grid(row=6, column=3, sticky=tk.SE + tk.NW)
+                # 加入部件清單
+                self.widgets_list.append(self.check_box_password)
+                self.widgets_list.append(self.lab_password)
 
-                self.lab_password_entry_error = tk.Label(self, text='')    # 密碼輸入錯誤訊息
-                self.lab_password_entry_error.grid(row=6, column=1, sticky=tk.E + tk.W)
+                self.lab_password_entry_error = tk.Label(self, text='', font=self.f_lab)    # 密碼輸入錯誤訊息
+                self.lab_password_entry_error.grid(row=7, column=3, sticky=tk.SE + tk.NW)
+                self.widgets_error_list.append(self.lab_password_entry_error)    # 加入部件清單
 
-                self.butn_create = tk.Button(self, text='創建', command=self.create_room)    # 創建按紐
-                self.butn_cancel = tk.Button(self, text='取消', command=lambda: special_exchange_page(self))    # 取消按紐
-                self.butn_create.grid(row=7, column=1, sticky=tk.E)
-                self.butn_cancel.grid(row=8, column=1, sticky=tk.E)
+                self.butn_create = tk.Button(self, text='創建', command=self.create_room, font=self.f_lab)    # 創建按紐
+                self.butn_cancel = tk.Button(self, text='取消', command=lambda: special_exchange_page(self), font=self.f_lab)    # 取消按紐
+                self.butn_create.grid(row=8, column=3, sticky=tk.SE + tk.NW)
+                self.butn_cancel.grid(row=9, column=3, sticky=tk.SE + tk.NW)
+                # 加入部件清單
+                self.widgets_list.append(self.butn_create)
+                self.widgets_list.append(self.butn_cancel)
+
+                Exchange_system.Special_exchange.set_bg_fg(self.widgets_list)    # 更改物件的文字顏色跟背景顏色
+                Exchange_system.Special_exchange.set_bg_fg_error(self.widgets_error_list)    # 更改錯誤訊息的文字顏色跟背景顏色
 
             # 選擇房間模式
             def choose_mode(self):
                 # 使願者選擇麻將模式
                 if self.radioValue.get() == 1:
                     self.room_mode = '麻將'    # 房間模式
-                    self.people_limit_entry = tk.Label(self, text=4)    # 強制設定人數上限
-                    self.people_limit_entry.grid(row=1, column=1, sticky=tk.E + tk.W)
+                    self.people_limit_entry = tk.Label(self, text=4, font=self.f_lab)       # 強制設定人數上限
+                    self.people_limit_entry.grid(row=2, column=3, sticky=tk.SE + tk.NW)
+                    Exchange_system.Special_exchange.set_bg_fg([self.people_limit_entry])    # 更改物件的文字顏色跟背景顏色
                 # 使願者選擇分錢模式:
                 else:
                     self.room_mode = '分錢'    # 房間模式
                     self.people_limit_entry = tk.Entry(self)    # 讓使用者輸入人數上限
-                    self.people_limit_entry.grid(row=1, column=1, sticky=tk.E + tk.W)
+                    self.people_limit_entry.grid(row=2, column=3, sticky=tk.SE + tk.NW)
 
             # 是否設定密碼
             def set_password(self):
                 # 是
                 if self.checkVar.get() == 1:
                     self.password_or_not = '是'    # 是否需要密碼?
-                    self.password_entry = tk.Entry(self)    # 開啟設定密碼的欄位
-                    self.password_entry.grid(row=5, column=1, sticky=tk.E + tk.W)
+                    self.password_entry = tk.Entry(self, show='*')    # 開啟設定密碼的欄位
+                    self.password_entry.grid(row=6, column=3, sticky=tk.SE + tk.NW)
                 # 否
                 else:
                     self.password_or_not = '否'    # 是否需要密碼?
                     self.lab_password_entry_error.configure(text='')
                     self.password_entry = tk.Entry(self, state='disable')    # 關閉設定密碼的欄位
-                    self.password_entry.grid(row=5, column=1, sticky=tk.E + tk.W)
+                    self.password_entry.grid(row=6, column=3, sticky=tk.SE + tk.NW)
 
             # 創建房間
             def create_room(self):
@@ -552,15 +671,30 @@ class Exchange_system(tk.Frame):
         class Room(tk.Frame):
             def __init__(self, room_mode, room_name, room_number, people_limit, user_account):
                 tk.Frame.__init__(self)
+                self.f_title = tk.font.Font(size=16, family='Microsoft JhengHei', weight='bold')    # 標題字形
+                self.f_b_title = tk.font.Font(size=45, family='Viner Hand ITC', weight='bold')      # 大標題字形
+                self.f_lab = tk.font.Font(size=12, family='Microsoft JhengHei', weight='bold')      # 一般字形
+                self.f_b_lab = tk.font.Font(size=16, family='Microsoft JhengHei', weight='bold')    # 較大字形
                 self.special_exchange_room = NTU_Coin.get_worksheet(3)    # 特殊交換的房間表單
                 self.sheet_of_room = NTU_Coin.worksheet('Room %s' % (room_number))    # 該房間的表單
                 self.member = self.sheet_of_room.col_values(2)[3:]        # 房間成員帳戶名稱名單
+                self.point = self.sheet_of_room.col_values(3)[3:]         # 房間成員分數表單
                 self.user_account = user_account    # 使用者帳號
                 self.room_mode = room_mode          # 房間模式
                 self.room_name = room_name          # 房間名稱
                 self.room_number = room_number      # 房間號碼
                 self.people_limit = people_limit    # 房間人數上限
+                # 將房間成員帳戶名稱名單&分數表單調整順序
+                self.member_ordered = []           # 房間成員帳戶名稱名單(已排序)
+                self.point_ordered = []            # 房間成員分數表單(已排序)
+                self.user_row = self.sheet_of_room.find(self.user_account).row    # 使用者帳號位置
+                for i in range(self.user_row, self.user_row + 4):
+                    if i > 7:
+                        i -= 4
+                    self.member_ordered.append(self.sheet_of_room.cell(i, 2).value)
+                    self.point_ordered.append(self.sheet_of_room.cell(i, 3).value)
                 self.grid()
+                # 選擇介面
                 if self.room_mode == '麻將':
                     self.create_widgets_mj()        # 麻將介面
                 elif self.room_mode == '分錢':
@@ -568,23 +702,151 @@ class Exchange_system(tk.Frame):
 
             # 設定麻將介面
             def create_widgets_mj(self):
-                content = '房間模式: ' + self.room_mode
-                self.lab_room_mode = tk.Label(self, text=content)      # 房間模式
-                self.lab_room_mode.grid(row=0, column=0, sticky=tk.W)
+                self.widgets_list = []     # 部件清單
+                self.user_info_list = []   # 使用者資訊清單
+
+                self.lab_blank1 = tk.Label(self)    #　空白部分
+                self.lab_blank1.grid(row=0, column=0, rowspan=39, columnspan=34, sticky=tk.NW + tk.SE)
+                self.widgets_list.append(self.lab_blank1)    # 加入部件清單
 
                 content = '房間號碼: ' + self.room_number
-                self.lab_room_number = tk.Label(self, text=content)    # 房間號碼
-                self.lab_room_number.grid(row=0, column=1, sticky=tk.W)
+                self.lab_room_number = tk.Label(self, text=content, font=self.f_lab)    # 房間號碼
+                self.lab_room_number.grid(row=0, column=0, sticky=tk.W)
+                self.widgets_list.append(self.lab_room_number)    # 加入部件清單
 
                 content = '房間名稱: ' + self.room_name
-                self.lab_room_name = tk.Label(self, text=content)      # 房間名稱
-                self.lab_room_name.grid(row=0, column=2, sticky=tk.W)
+                self.lab_room_name = tk.Label(self, text=content, font=self.f_lab)      # 房間名稱
+                self.lab_room_name.grid(row=1, column=0, sticky=tk.W)
+                self.widgets_list.append(self.lab_room_name)    # 加入部件清單
 
-                self.butn_refresh = tk.Button(self, text='重整房間', command=self.refresh_room)    # 重整房間按鈕
-                self.butn_refresh.grid(row=0, column=3, sticky=tk.NW + tk.SE)
+                content = '房間模式: ' + self.room_mode
+                self.lab_room_mode = tk.Label(self, text=content, font=self.f_lab)      # 房間模式
+                self.lab_room_mode.grid(row=2, column=0, sticky=tk.W)
+                self.widgets_list.append(self.lab_room_mode)    # 加入部件清單
 
-                self.butn_leave = tk.Button(self, text='離開房間', command=self.leave_room)        # 離開房間按鈕
-                self.butn_leave.grid(row=0, column=4, sticky=tk.NW + tk.SE)
+                self.lab_title = tk.Label(self, text='MAHJONG', font=self.f_b_title, width=20)    # 房間標題
+                self.lab_title.grid(row=0, column=1, rowspan=3, columnspan=32, sticky=tk.NW + tk.SE)
+                self.widgets_list.append(self.lab_title)    # 加入部件清單
+
+
+                self.butn_refresh = tk.Button(self, text='重整房間', command=self.refresh_room,
+                                              font=self.f_lab, width=10)    # 重整房間按鈕
+                self.butn_refresh.grid(row=0, column=33, sticky=tk.NW + tk.SE)
+                self.widgets_list.append(self.butn_refresh)    # 加入部件清單
+
+                self.butn_leave = tk.Button(self, text='離開房間', command=self.leave_room, font=self.f_lab)        # 離開房間按鈕
+                self.butn_leave.grid(row=1, column=33, sticky=tk.NW + tk.SE)
+                self.widgets_list.append(self.butn_leave)    # 加入部件清單
+
+                load = Image.open('C:\\Users\\tiffany\\Desktop\\姚冠宇\\商管程式設計\\期末project\\NTU-Coin\\麻將4.jpg')
+                render = ImageTk.PhotoImage(load)
+                self.lab_mj_table = tk.Label(self, image=render)    # 麻將桌
+                self.image = render
+                self.lab_mj_table.grid(row=5, column=2, rowspan=30, columnspan=30, sticky=tk.NW + tk.SE)
+                self.widgets_list.append(self.lab_mj_table)    # 加入部件清單
+
+                self.user1_point = tk.Label(self, text=self.point_ordered[0], font=self.f_title)    # 使用者一的分數
+                self.user1_point.grid(row=36, column=17, sticky=tk.NW + tk.SE)
+                # 加入使用者資訊清單
+                self.user_info_list.append(self.user1_point)
+
+                self.lab_user2 = tk.Label(self, text=self.member_ordered[1] if self.member_ordered[1] != '' else '', font=self.f_b_lab)     # 使用者二
+                self.lab_user2.grid(row=20, column=32, sticky=tk.NW + tk.SE)
+                self.user2_point = tk.Label(self, text=self.point_ordered[1] if self.point_ordered[1] != '' else '', font=self.f_b_lab)    # 使用者二
+                self.user2_point.grid(row=21, column=32, sticky=tk.NW + tk.SE)
+                # 加入使用者資訊清單
+                self.user_info_list.append(self.lab_user2)
+                self.user_info_list.append(self.user2_point)
+
+                self.lab_user3 = tk.Label(self, text=self.member_ordered[2] if self.member_ordered[2] != '' else '', font=self.f_b_lab)     # 使用者三
+                self.lab_user3.grid(row=3, column=17, sticky=tk.NW + tk.SE)
+                self.user3_point = tk.Label(self, text=self.point_ordered[2] if self.point_ordered[2] != '' else '', font=self.f_b_lab)    # 使用者三
+                self.user3_point.grid(row=4, column=17, sticky=tk.NW + tk.SE)
+                # 加入使用者資訊清單
+                self.user_info_list.append(self.lab_user3)
+                self.user_info_list.append(self.user3_point)
+
+                self.lab_user4 = tk.Label(self, text=self.member_ordered[3] if self.member_ordered[3] != '' else '', font=self.f_b_lab)     # 使用者四
+                self.lab_user4.grid(row=20, column=1, sticky=tk.NW + tk.SE)
+                self.user4_point = tk.Label(self, text=self.point_ordered[3] if self.point_ordered[3] != '' else '', font=self.f_b_lab)    # 使用者四
+                self.user4_point.grid(row=21, column=1, sticky=tk.NW + tk.SE)
+                # 加入使用者資訊清單
+                self.user_info_list.append(self.lab_user4)
+                self.user_info_list.append(self.user4_point)
+
+                # 製作下拉選單的內容
+                value_list = ['']
+                for user in self.member_ordered[1:]:
+                    if user != '':
+                        value_list.append(user)
+                self.combo_user = ttk.Combobox(self, values=value_list, state="readonly")    # 選擇使用者的下拉選單
+                self.combo_user.grid(row=37, column=17, sticky=tk.NW + tk.SE)  
+
+                self.butn_end = tk.Button(self, text='結算', font=self.f_lab, command=self.end)    # 結算的按鈕
+                self.butn_end.grid(row=38, column=16, sticky=tk.NW + tk.SE)
+                self.butn_end.configure(bg='orange red4', fg='white')    
+
+                self.amount_entry = tk.Entry(self)    # 讓使用者輸入金額
+                self.amount_entry.grid(row=38, column=17, sticky=tk.NW + tk.SE)
+
+                self.butn_pay = tk.Button(self, text='付錢', font=self.f_lab, command=self.pay)    # 付錢的按紐
+                self.butn_pay.grid(row=38, column=18, sticky=tk.NW + tk.SE)
+                self.widgets_list.append(self.butn_pay)    # 加入部件清單
+
+                Exchange_system.Special_exchange.set_bg_fg(self.widgets_list)    # 更改物件的文字顏色跟背景顏色
+                Exchange_system.Special_exchange.set_bg_fg_user(self.user_info_list)    # 更改使用者資訊的文字顏色跟背景顏色                
+
+            # 付錢
+            def pay(self):
+                self.exchange_user = self.combo_user.get()        # 交換帳戶名稱
+                
+                # 確認交換數量為數字
+                self.exchange_amount = self.amount_entry.get()    # 交換數量
+                try:
+                    int(self.exchange_amount)
+                except TabError as error:
+                    amount_accepted = False
+                else:
+                    # 確認家換數量為正值
+                    self.exchange_amount = int(self.exchange_amount)
+                    if self.exchange_amount > 0:
+                        amount_accepted = True
+                    else:
+                        amount_accepted = False
+
+                if (self.exchange_user != '') and amount_accepted:
+                    self.exchange_user_row = self.sheet_of_room.find(self.exchange_user).row    # 交換帳號位置
+                    self.exchange_user_point = int(self.sheet_of_room.acell('C%d' % (self.exchange_user_row)).value)    # 交換帳戶分數
+                    self.user_row = self.sheet_of_room.find(self.member_ordered[0]).row         # 使用者帳號位置
+                    self.user_point = int(self.point_ordered[0])    # 使用者分數
+                    self.user_balance = int(self.sheet_of_room.acell('D%d' % (self.user_row)).value)    # 使用者帳戶餘額
+
+                    # 更新分數
+                    self.update_exchange_user_point = self.exchange_user_point + self.exchange_amount      # 欲更新之交換帳戶分數
+                    self.update_user_point = self.user_point - self.exchange_amount    # 欲更新之使用者分數
+                    # 使用者帳戶餘額不足支付
+                    if (-self.update_user_point) > self.user_balance:
+                        self.user_rest = self.user_balance + self.user_point    # 使用者剩下的錢
+                        self.sheet_of_room.update('C%d' % (self.exchange_user_row), str(self.exchange_user_point + self.user_rest))
+                        self.sheet_of_room.update('C%d' % (self.user_row), str(self.user_point - self.user_rest))
+                        tk.messagebox.showwarning(title='強制結算', message='有玩家破產了')
+                        self.end()
+                    # 足以支付
+                    else:
+                        self.sheet_of_room.update('C%d' % (self.exchange_user_row), str(self.update_exchange_user_point))
+                        self.sheet_of_room.update('C%d' % (self.user_row), str(self.update_user_point))
+                        self.refresh_room()    # 重整頁面
+
+            # 結算
+            def end(self):
+                self.sheet_of_room = NTU_Coin.worksheet('Room %s' % (self.room_number))    # 該房間的表單
+                self.user_balance = self.sheet_of_room.acell('D%d' % (self.user_row)).value    # 使用者帳戶餘額
+                self.user_point = self.sheet_of_room.acell('C%d' % (self.user_row)).value      # 使用者分數
+                # 更新使用者帳戶餘額
+                self.user_info_row = sheet.find(self.user_account).row    # 使用者資訊位置
+                self.update_user_balance = int(self.user_balance) + int(self.user_point)
+                sheet.update_cell(self.user_info_row, 5, str(self.update_user_balance))
+                self.leave_room()
 
             # 設定分錢介面
             def create_widgets_share(self):
@@ -613,8 +875,10 @@ class Exchange_system(tk.Frame):
                 else:
                     self.sheet_of_room.delete_rows(self.user.row)    # 刪除該使用者的資訊
                     self.special_exchange_room.update_cell(self.room.row, 6, str(self.people - 1))    # 更新房間人數
+                    self.sheet_of_room.add_rows(0)
 
                 special_exchange_page(self)    # 回到特殊交換系統
+
 
 # 進入交換主頁
 def exchange_homepage(window):
@@ -637,6 +901,9 @@ def special_exchange_page(window):
     window.destroy()    # 將原本的畫面刪除
     spec_ex = Exchange_system.Special_exchange()
     spec_ex.master.title("Special Exchange System")
+    spec_ex.master.geometry('1024x699')
+    spec_ex.master.configure(bg='#363636')
+    spec_ex.master.resizable(False, False)
     spec_ex.mainloop()
 
 
@@ -648,6 +915,6 @@ NTU_Coin = client.open('NTU Coin')
 sheet = NTU_Coin.get_worksheet(0)  # Open the spreadhseet
 
 
-account = 'b08701153@ntu.edu.tw'    # 使用者帳號(從登入資訊抓來)
+account = 'admin@gmail.com'    # 使用者帳號(從登入資訊抓來)
 ex_system = Exchange_system()
 exchange_homepage(ex_system)
