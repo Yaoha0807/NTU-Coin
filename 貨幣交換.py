@@ -697,9 +697,6 @@ class Exchange_system(tk.Frame):
                     # 選擇介面
                     if self.room_mode == '麻將':
                         self.grid()
-                        self.create_widgets_mj()        # 麻將介面
-                        self.member = self.sheet_of_room.col_values(2)[3:]        # 房間成員帳戶名稱名單
-                        self.point = self.sheet_of_room.col_values(3)[3:]         # 房間成員分數表單
                         # 將房間成員帳戶名稱名單&分數表單調整順序
                         self.member_ordered = []           # 房間成員帳戶名稱名單(已排序)
                         self.point_ordered = []            # 房間成員分數表單(已排序)
@@ -709,6 +706,7 @@ class Exchange_system(tk.Frame):
                                 i -= 4
                             self.member_ordered.append(self.sheet_of_room.cell(i, 2).value)
                             self.point_ordered.append(self.sheet_of_room.cell(i, 3).value)
+                        self.create_widgets_mj()        # 麻將介面
 
                     elif self.room_mode == '分錢':
                         self.create_widgets_share()     # 分錢介面
