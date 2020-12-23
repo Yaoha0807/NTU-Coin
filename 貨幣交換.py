@@ -682,6 +682,7 @@ class Exchange_system(tk.Frame):
                 else:
                     self.f_title = tk.font.Font(size=16, family='Microsoft JhengHei', weight='bold')    # 標題字形
                     self.f_b_title = tk.font.Font(size=45, family='Viner Hand ITC', weight='bold')      # 大標題字形
+                    self.f_bbb_title = tk.font.Font(size=90, family='Viner Hand ITC', weight='bold')    # 超大標題字形
                     self.f_lab = tk.font.Font(size=12, family='Microsoft JhengHei', weight='bold')      # 一般字形
                     self.f_b_lab = tk.font.Font(size=16, family='Microsoft JhengHei', weight='bold')    # 較大字形
                     self.special_exchange_room = NTU_Coin.get_worksheet(3)      # 特殊交換的房間表單
@@ -692,21 +693,23 @@ class Exchange_system(tk.Frame):
                     self.room_name = room_name          # 房間名稱
                     self.room_number = room_number      # 房間號碼
                     self.people_limit = people_limit    # 房間人數上限
-                    self.member = self.sheet_of_room.col_values(2)[3:]        # 房間成員帳戶名稱名單
-                    self.point = self.sheet_of_room.col_values(3)[3:]         # 房間成員分數表單
-                    # 將房間成員帳戶名稱名單&分數表單調整順序
-                    self.member_ordered = []           # 房間成員帳戶名稱名單(已排序)
-                    self.point_ordered = []            # 房間成員分數表單(已排序)
-                    self.user_row = self.sheet_of_room.find(self.user_account).row    # 使用者帳號位置
-                    for i in range(self.user_row, self.user_row + 4):
-                        if i > 7:
-                            i -= 4
-                        self.member_ordered.append(self.sheet_of_room.cell(i, 2).value)
-                        self.point_ordered.append(self.sheet_of_room.cell(i, 3).value)
                     self.grid()
                     # 選擇介面
                     if self.room_mode == '麻將':
+                        self.grid()
                         self.create_widgets_mj()        # 麻將介面
+                        self.member = self.sheet_of_room.col_values(2)[3:]        # 房間成員帳戶名稱名單
+                        self.point = self.sheet_of_room.col_values(3)[3:]         # 房間成員分數表單
+                        # 將房間成員帳戶名稱名單&分數表單調整順序
+                        self.member_ordered = []           # 房間成員帳戶名稱名單(已排序)
+                        self.point_ordered = []            # 房間成員分數表單(已排序)
+                        self.user_row = self.sheet_of_room.find(self.user_account).row    # 使用者帳號位置
+                        for i in range(self.user_row, self.user_row + 4):
+                            if i > 7:
+                                i -= 4
+                            self.member_ordered.append(self.sheet_of_room.cell(i, 2).value)
+                            self.point_ordered.append(self.sheet_of_room.cell(i, 3).value)
+
                     elif self.room_mode == '分錢':
                         self.create_widgets_share()     # 分錢介面
 
@@ -899,7 +902,7 @@ class Exchange_system(tk.Frame):
                     self.user4_info_row = sheet.find(self.member_ordered[3]).row    # 使用者四資訊位置
                     self.update_user4_balance = int(self.user4_balance) + int(self.user4_point)
                     sheet.update_cell(self.user4_info_row, 5, str(self.update_user4_balance))
-                    
+
                     self.upload_record()    # 上傳紀錄
                     NTU_Coin.del_worksheet(self.sheet_of_room)    # 刪除該房間的表單
                     self.special_exchange_room.delete_rows(self.room.row)    # 刪除該房間的資訊
@@ -907,7 +910,21 @@ class Exchange_system(tk.Frame):
 
             # 設定分錢介面
             def create_widgets_share(self):
-                print('分錢')
+                self.widgets_list = []     # 部件清單
+
+                self.lab_blank1 = tk.Label(self)    #　空白部分
+                self.lab_blank1.grid(row=0, column=0, rowspan=3, sticky=tk.NW + tk.SE)
+                self.widgets_list.append(self.lab_blank1)    # 加入部件清單
+                
+                self.lab_title = tk.Label(self, text='COMING SOON', font=self.f_b_title, width=27, height=6)    # 房間標題
+                self.lab_title.grid(row=0, column=0, sticky=tk.NW + tk.SE)
+                self.widgets_list.append(self.lab_title)     # 加入部件清單
+
+                self.butn_leave = tk.Button(self, text='離開房間', command=self.leave_room, font=self.f_lab)    # 離開房間按鈕
+                self.butn_leave.grid(row=1, column=0, rowspan=2, sticky=tk.W)
+                self.widgets_list.append(self.butn_leave)    # 加入部件清單
+
+                Exchange_system.Special_exchange.set_bg_fg(self.widgets_list)    # 更改物件的文字顏色跟背景顏色
 
             # 重整房間頁面
             def refresh_room(self):
@@ -940,13 +957,12 @@ class Exchange_system(tk.Frame):
             def upload_record(self):
                 self.exchange_record_sheet = NTU_Coin.get_worksheet(2)    # 交換記錄表單
                 num_rows = len(self.exchange_record_sheet.col_values(1))
-                row1 = [str(num_rows + 1), 'spec' , self.user_account, '', self.user_point, self.user_balance, self.end_time, '麻將']
-                row2 = [str(num_rows + 2), 'spec' , self.user2_account, '', self.user2_point, self.user2_balance, self.end_time, '麻將']
-                row3 = [str(num_rows + 3), 'spec' , self.user3_account, '', self.user3_point, self.user3_balance, self.end_time, '麻將']
-                row4 = [str(num_rows + 4), 'spec' , self.user4_account, '', self.user4_point, self.user4_balance, self.end_time, '麻將']
+                row1 = [str(num_rows + 1), 'spec', self.user_account, '', self.user_point, self.user_balance, self.end_time, '麻將']
+                row2 = [str(num_rows + 2), 'spec', self.user2_account, '', self.user2_point, self.user2_balance, self.end_time, '麻將']
+                row3 = [str(num_rows + 3), 'spec', self.user3_account, '', self.user3_point, self.user3_balance, self.end_time, '麻將']
+                row4 = [str(num_rows + 4), 'spec', self.user4_account, '', self.user4_point, self.user4_balance, self.end_time, '麻將']
                 insert_rows = [row1, row2, row3, row4]
                 self.exchange_record_sheet.append_rows(insert_rows)    # 新增紀錄
-
 
 
 # 進入交換主頁
