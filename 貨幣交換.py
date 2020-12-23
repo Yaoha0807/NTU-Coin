@@ -210,7 +210,7 @@ class Exchange_system(tk.Frame):
                 exchange_record_sheet = NTU_Coin.get_worksheet(2)    # 交換記錄表單
                 num_rows = len(exchange_record_sheet.col_values(1))
                 row1 = [str(num_rows + 1), 'norm-', self.user_account, self.exchange_account, -self.exchange_amount, self.user_balance, self.exchange_time, self.description]
-                row2 = [num_rows + 2, 'norm+', self.exchange_account, self.user_account, self.exchange_amount, self.exchange_balance, self.exchange_time, self.description]
+                row2 = [str(num_rows + 2), 'norm+', self.exchange_account, self.user_account, self.exchange_amount, self.exchange_balance, self.exchange_time, self.description]
                 insert_rows = [row1, row2]
                 exchange_record_sheet.append_rows(insert_rows)    # 新增紀錄
 
@@ -671,34 +671,44 @@ class Exchange_system(tk.Frame):
         class Room(tk.Frame):
             def __init__(self, room_mode, room_name, room_number, people_limit, user_account):
                 tk.Frame.__init__(self)
-                self.f_title = tk.font.Font(size=16, family='Microsoft JhengHei', weight='bold')    # 標題字形
-                self.f_b_title = tk.font.Font(size=45, family='Viner Hand ITC', weight='bold')      # 大標題字形
-                self.f_lab = tk.font.Font(size=12, family='Microsoft JhengHei', weight='bold')      # 一般字形
-                self.f_b_lab = tk.font.Font(size=16, family='Microsoft JhengHei', weight='bold')    # 較大字形
-                self.special_exchange_room = NTU_Coin.get_worksheet(3)    # 特殊交換的房間表單
-                self.sheet_of_room = NTU_Coin.worksheet('Room %s' % (room_number))    # 該房間的表單
-                self.member = self.sheet_of_room.col_values(2)[3:]        # 房間成員帳戶名稱名單
-                self.point = self.sheet_of_room.col_values(3)[3:]         # 房間成員分數表單
-                self.user_account = user_account    # 使用者帳號
-                self.room_mode = room_mode          # 房間模式
-                self.room_name = room_name          # 房間名稱
-                self.room_number = room_number      # 房間號碼
-                self.people_limit = people_limit    # 房間人數上限
-                # 將房間成員帳戶名稱名單&分數表單調整順序
-                self.member_ordered = []           # 房間成員帳戶名稱名單(已排序)
-                self.point_ordered = []            # 房間成員分數表單(已排序)
-                self.user_row = self.sheet_of_room.find(self.user_account).row    # 使用者帳號位置
-                for i in range(self.user_row, self.user_row + 4):
-                    if i > 7:
-                        i -= 4
-                    self.member_ordered.append(self.sheet_of_room.cell(i, 2).value)
-                    self.point_ordered.append(self.sheet_of_room.cell(i, 3).value)
-                self.grid()
-                # 選擇介面
-                if self.room_mode == '麻將':
-                    self.create_widgets_mj()        # 麻將介面
-                elif self.room_mode == '分錢':
-                    self.create_widgets_share()     # 分錢介面
+
+                try:
+                    self.sheet_of_room = NTU_Coin.worksheet('Room %s' % (room_number))    # 該房間的表單
+                # 房間已被關閉
+                except Exception as error:
+                    tk.messagebox.showwarning(title='強制離開房間', message='房間已結算')
+                    special_exchange_page(self)    # 導回特殊交換主頁
+                # 房間未被關閉
+                else:
+                    self.f_title = tk.font.Font(size=16, family='Microsoft JhengHei', weight='bold')    # 標題字形
+                    self.f_b_title = tk.font.Font(size=45, family='Viner Hand ITC', weight='bold')      # 大標題字形
+                    self.f_lab = tk.font.Font(size=12, family='Microsoft JhengHei', weight='bold')      # 一般字形
+                    self.f_b_lab = tk.font.Font(size=16, family='Microsoft JhengHei', weight='bold')    # 較大字形
+                    self.special_exchange_room = NTU_Coin.get_worksheet(3)      # 特殊交換的房間表單
+                    self.sheet_of_room = NTU_Coin.worksheet('Room %s' % (room_number))    # 該房間的表單
+                    self.room = self.special_exchange_room.find(room_number)    # 該房間
+                    self.user_account = user_account    # 使用者帳號
+                    self.room_mode = room_mode          # 房間模式
+                    self.room_name = room_name          # 房間名稱
+                    self.room_number = room_number      # 房間號碼
+                    self.people_limit = people_limit    # 房間人數上限
+                    self.member = self.sheet_of_room.col_values(2)[3:]        # 房間成員帳戶名稱名單
+                    self.point = self.sheet_of_room.col_values(3)[3:]         # 房間成員分數表單
+                    # 將房間成員帳戶名稱名單&分數表單調整順序
+                    self.member_ordered = []           # 房間成員帳戶名稱名單(已排序)
+                    self.point_ordered = []            # 房間成員分數表單(已排序)
+                    self.user_row = self.sheet_of_room.find(self.user_account).row    # 使用者帳號位置
+                    for i in range(self.user_row, self.user_row + 4):
+                        if i > 7:
+                            i -= 4
+                        self.member_ordered.append(self.sheet_of_room.cell(i, 2).value)
+                        self.point_ordered.append(self.sheet_of_room.cell(i, 3).value)
+                    self.grid()
+                    # 選擇介面
+                    if self.room_mode == '麻將':
+                        self.create_widgets_mj()        # 麻將介面
+                    elif self.room_mode == '分錢':
+                        self.create_widgets_share()     # 分錢介面
 
             # 設定麻將介面
             def create_widgets_mj(self):
@@ -798,55 +808,102 @@ class Exchange_system(tk.Frame):
 
             # 付錢
             def pay(self):
-                self.exchange_user = self.combo_user.get()        # 交換帳戶名稱
-                
-                # 確認交換數量為數字
-                self.exchange_amount = self.amount_entry.get()    # 交換數量
+                # 避免錯誤
                 try:
-                    int(self.exchange_amount)
-                except TabError as error:
-                    amount_accepted = False
+                    self.sheet_of_room = NTU_Coin.worksheet('Room %s' % (self.room_number))
+                # 房間已被關閉
+                except Exception as error:
+                    self.refresh_room()
+                # 房間未被關閉
                 else:
-                    # 確認家換數量為正值
-                    self.exchange_amount = int(self.exchange_amount)
-                    if self.exchange_amount > 0:
-                        amount_accepted = True
-                    else:
+                    self.sheet_of_room = NTU_Coin.worksheet('Room %s' % (self.room_number))    # 該房間的表單
+                    self.exchange_user = self.combo_user.get()        # 交換帳戶名稱
+                    
+                    # 確認交換數量為數字
+                    self.exchange_amount = self.amount_entry.get()    # 交換數量
+                    try:
+                        int(self.exchange_amount)
+                    except Exception as error:
                         amount_accepted = False
-
-                if (self.exchange_user != '') and amount_accepted:
-                    self.exchange_user_row = self.sheet_of_room.find(self.exchange_user).row    # 交換帳號位置
-                    self.exchange_user_point = int(self.sheet_of_room.acell('C%d' % (self.exchange_user_row)).value)    # 交換帳戶分數
-                    self.user_row = self.sheet_of_room.find(self.member_ordered[0]).row         # 使用者帳號位置
-                    self.user_point = int(self.point_ordered[0])    # 使用者分數
-                    self.user_balance = int(self.sheet_of_room.acell('D%d' % (self.user_row)).value)    # 使用者帳戶餘額
-
-                    # 更新分數
-                    self.update_exchange_user_point = self.exchange_user_point + self.exchange_amount      # 欲更新之交換帳戶分數
-                    self.update_user_point = self.user_point - self.exchange_amount    # 欲更新之使用者分數
-                    # 使用者帳戶餘額不足支付
-                    if (-self.update_user_point) > self.user_balance:
-                        self.user_rest = self.user_balance + self.user_point    # 使用者剩下的錢
-                        self.sheet_of_room.update('C%d' % (self.exchange_user_row), str(self.exchange_user_point + self.user_rest))
-                        self.sheet_of_room.update('C%d' % (self.user_row), str(self.user_point - self.user_rest))
-                        tk.messagebox.showwarning(title='強制結算', message='有玩家破產了')
-                        self.end()
-                    # 足以支付
                     else:
-                        self.sheet_of_room.update('C%d' % (self.exchange_user_row), str(self.update_exchange_user_point))
-                        self.sheet_of_room.update('C%d' % (self.user_row), str(self.update_user_point))
-                        self.refresh_room()    # 重整頁面
+                        # 確認家換數量為正值
+                        self.exchange_amount = int(self.exchange_amount)
+                        if self.exchange_amount > 0:
+                            amount_accepted = True
+                        else:
+                            amount_accepted = False
+
+                    if (self.exchange_user != '') and amount_accepted:
+                        self.exchange_user_row = self.sheet_of_room.find(self.exchange_user).row    # 交換帳號位置
+                        self.exchange_user_point = int(self.sheet_of_room.acell('C%d' % (self.exchange_user_row)).value)    # 交換帳戶分數
+                        self.user_row = self.sheet_of_room.find(self.member_ordered[0]).row         # 使用者帳號位置
+                        self.user_point = int(self.point_ordered[0])    # 使用者分數
+                        self.user_balance = int(self.sheet_of_room.acell('D%d' % (self.user_row)).value)    # 使用者帳戶餘額
+
+                        # 更新分數
+                        self.update_exchange_user_point = self.exchange_user_point + self.exchange_amount      # 欲更新之交換帳戶分數
+                        self.update_user_point = self.user_point - self.exchange_amount    # 欲更新之使用者分數
+                        # 使用者帳戶餘額不足支付
+                        if (-self.update_user_point) > self.user_balance:
+                            self.user_rest = self.user_balance + self.user_point    # 使用者剩下的錢
+                            self.sheet_of_room.update('C%d' % (self.exchange_user_row), str(self.exchange_user_point + self.user_rest))
+                            self.sheet_of_room.update('C%d' % (self.user_row), str(self.user_point - self.user_rest))
+                            tk.messagebox.showwarning(title='強制結算', message='您已破產了')
+                            self.end()
+                        # 足以支付
+                        else:
+                            self.sheet_of_room.update('C%d' % (self.exchange_user_row), str(self.update_exchange_user_point))
+                            self.sheet_of_room.update('C%d' % (self.user_row), str(self.update_user_point))
+                            self.refresh_room()    # 重整頁面
 
             # 結算
             def end(self):
-                self.sheet_of_room = NTU_Coin.worksheet('Room %s' % (self.room_number))    # 該房間的表單
-                self.user_balance = self.sheet_of_room.acell('D%d' % (self.user_row)).value    # 使用者帳戶餘額
-                self.user_point = self.sheet_of_room.acell('C%d' % (self.user_row)).value      # 使用者分數
-                # 更新使用者帳戶餘額
-                self.user_info_row = sheet.find(self.user_account).row    # 使用者資訊位置
-                self.update_user_balance = int(self.user_balance) + int(self.user_point)
-                sheet.update_cell(self.user_info_row, 5, str(self.update_user_balance))
-                self.leave_room()
+                # 避免錯誤
+                try:
+                    self.sheet_of_room = NTU_Coin.worksheet('Room %s' % (self.room_number))
+                # 房間已被關閉
+                except Exception as error:
+                    self.refresh_room()
+                # 房間未被關閉
+                else:
+                    self.end_time = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d %H:%M:%S')  # 結算時間
+                    # 更新使用者帳戶餘額
+                    self.sheet_of_room = NTU_Coin.worksheet('Room %s' % (self.room_number))    # 該房間的表單
+                    self.user_balance = self.sheet_of_room.acell('D%d' % (self.user_row)).value    # 使用者帳戶餘額
+                    self.user_point = self.sheet_of_room.acell('C%d' % (self.user_row)).value      # 使用者分數
+                    self.user_info_row = sheet.find(self.user_account).row    # 使用者資訊位置
+                    self.update_user_balance = int(self.user_balance) + int(self.user_point)
+                    sheet.update_cell(self.user_info_row, 5, str(self.update_user_balance))
+
+                    # 更新其他使用者之帳戶餘額
+                    self.user2_row = self.sheet_of_room.find(self.member_ordered[1]).row    # 使用者二帳號位置
+                    self.user2_balance = self.sheet_of_room.acell('D%d' % (self.user2_row)).value    # 使用者二帳戶餘額
+                    self.user2_point = self.sheet_of_room.acell('C%d' % (self.user2_row)).value      # 使用者二分數
+                    self.user2_account = self.sheet_of_room.acell('A%d' % (self.user2_row)).value    # 使用者二帳號
+                    self.user2_info_row = sheet.find(self.member_ordered[1]).row    # 使用者二資訊位置
+                    self.update_user2_balance = int(self.user2_balance) + int(self.user2_point)
+                    sheet.update_cell(self.user2_info_row, 5, str(self.update_user2_balance))
+
+                    self.user3_row = self.sheet_of_room.find(self.member_ordered[2]).row    # 使用者三帳號位置
+                    self.user3_balance = self.sheet_of_room.acell('D%d' % (self.user3_row)).value    # 使用者三帳戶餘額
+                    self.user3_point = self.sheet_of_room.acell('C%d' % (self.user3_row)).value      # 使用者三分數
+                    self.user3_account = self.sheet_of_room.acell('A%d' % (self.user3_row)).value    # 使用者三帳號
+                    self.user3_info_row = sheet.find(self.member_ordered[2]).row    # 使用者三資訊位置
+                    self.update_user3_balance = int(self.user3_balance) + int(self.user3_point)
+                    sheet.update_cell(self.user3_info_row, 5, str(self.update_user3_balance))
+
+                    self.user4_row = self.sheet_of_room.find(self.member_ordered[3]).row    # 使用者四帳號位置
+                    self.user4_balance = self.sheet_of_room.acell('D%d' % (self.user4_row)).value    # 使用者四帳戶餘額
+                    self.user4_point = self.sheet_of_room.acell('C%d' % (self.user4_row)).value      # 使用者四分數
+                    self.user4_account = self.sheet_of_room.acell('A%d' % (self.user4_row)).value    # 使用者四帳號
+                    self.user4_info_row = sheet.find(self.member_ordered[3]).row    # 使用者四資訊位置
+                    self.update_user4_balance = int(self.user4_balance) + int(self.user4_point)
+                    sheet.update_cell(self.user4_info_row, 5, str(self.update_user4_balance))
+                    
+                    self.upload_record()    # 上傳紀錄
+                    NTU_Coin.del_worksheet(self.sheet_of_room)    # 刪除該房間的表單
+                    self.special_exchange_room.delete_rows(self.room.row)    # 刪除該房間的資訊
+                    special_exchange_page(self)    # 導回主畫面
 
             # 設定分錢介面
             def create_widgets_share(self):
@@ -878,6 +935,18 @@ class Exchange_system(tk.Frame):
                     self.sheet_of_room.add_rows(0)
 
                 special_exchange_page(self)    # 回到特殊交換系統
+
+            # 上傳紀錄
+            def upload_record(self):
+                self.exchange_record_sheet = NTU_Coin.get_worksheet(2)    # 交換記錄表單
+                num_rows = len(self.exchange_record_sheet.col_values(1))
+                row1 = [str(num_rows + 1), 'spec' , self.user_account, '', self.user_point, self.user_balance, self.end_time, '麻將']
+                row2 = [str(num_rows + 2), 'spec' , self.user2_account, '', self.user2_point, self.user2_balance, self.end_time, '麻將']
+                row3 = [str(num_rows + 3), 'spec' , self.user3_account, '', self.user3_point, self.user3_balance, self.end_time, '麻將']
+                row4 = [str(num_rows + 4), 'spec' , self.user4_account, '', self.user4_point, self.user4_balance, self.end_time, '麻將']
+                insert_rows = [row1, row2, row3, row4]
+                self.exchange_record_sheet.append_rows(insert_rows)    # 新增紀錄
+
 
 
 # 進入交換主頁
