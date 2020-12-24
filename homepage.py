@@ -1319,7 +1319,7 @@ def exchangeSys_special():
                 self.user_info_list = []   # 使用者資訊清單
 
                 self.lab_blank1 = tk.Label(self)    #　空白部分
-                self.lab_blank1.grid(row=0, column=0, rowspan=39, columnspan=34, sticky=tk.NW + tk.SE)
+                self.lab_blank1.grid(row=0, column=0, rowspan=40, columnspan=34, sticky=tk.NW + tk.SE)
                 self.widgets_list.append(self.lab_blank1)    # 加入部件清單
 
                 content = '房間號碼: ' + self.room_number
@@ -1341,13 +1341,20 @@ def exchangeSys_special():
                 self.lab_title.grid(row=0, column=1, rowspan=3, columnspan=32, sticky=tk.NW + tk.SE)
                 self.widgets_list.append(self.lab_title)    # 加入部件清單
 
-
                 self.butn_refresh = tk.Button(self, text='重整房間', command=self.refresh_room,
                                             font=self.f_lab, width=10)    # 重整房間按鈕
                 self.butn_refresh.grid(row=0, column=33, sticky=tk.NW + tk.SE)
                 self.widgets_list.append(self.butn_refresh)    # 加入部件清單
 
-                self.butn_leave = tk.Button(self, text='離開房間', command=self.leave_room, font=self.f_lab)        # 離開房間按鈕
+                for point in self.point_ordered:
+                    # 還有分數未結算
+                    if not str(point) == ('0' or ''):
+                        self.command = self.cant_leave
+                        break
+                    # 分數皆為0
+                    else:
+                        self.command = self.leave_room
+                self.butn_leave = tk.Button(self, text='離開房間', command=self.command, font=self.f_lab)        # 離開房間按鈕
                 self.butn_leave.grid(row=1, column=33, sticky=tk.NW + tk.SE)
                 self.widgets_list.append(self.butn_leave)    # 加入部件清單
 
@@ -1406,6 +1413,10 @@ def exchangeSys_special():
                 self.butn_pay.grid(row=38, column=18, sticky=tk.NW + tk.SE)
                 self.widgets_list.append(self.butn_pay)    # 加入部件清單
 
+                self.lab_amount_error = tk.Label(self, text='', font=self.f_lab)
+                self.lab_amount_error.grid(row=39, column=17, sticky=tk.NW + tk.SE)
+                Special_exchange.set_bg_fg_error([self.lab_amount_error])    # 更改錯誤提示的文字顏色跟背景顏色
+
                 Special_exchange.set_bg_fg(self.widgets_list)    # 更改物件的文字顏色跟背景顏色
                 Special_exchange.set_bg_fg_user(self.user_info_list)    # 更改使用者資訊的文字顏色跟背景顏色                
 
@@ -1428,6 +1439,7 @@ def exchangeSys_special():
                         int(self.exchange_amount)
                     except Exception as error:
                         amount_accepted = False
+                        self.lab_amount_error.configure(text='請輸入數字')
                     else:
                         # 確認家換數量為正值
                         self.exchange_amount = int(self.exchange_amount)
@@ -1435,6 +1447,7 @@ def exchangeSys_special():
                             amount_accepted = True
                         else:
                             amount_accepted = False
+                            self.lab_amount_error.configure(text='輸入值須為正')
 
                     if (self.exchange_user != '') and amount_accepted:
                         self.exchange_user_row = self.sheet_of_room.find(self.exchange_user).row    # 交換帳號位置
@@ -1452,7 +1465,7 @@ def exchangeSys_special():
                             self.sheet_of_room.update('C%d' % (self.exchange_user_row), str(self.exchange_user_point + self.user_rest))
                             self.sheet_of_room.update('C%d' % (self.user_row), str(self.user_point - self.user_rest))
                             tk.messagebox.showwarning(title='強制結算', message='您已破產了')
-                            self.end()
+                            self.end(bankrupt=True)
                         # 足以支付
                         else:
                             self.sheet_of_room.update('C%d' % (self.exchange_user_row), str(self.update_exchange_user_point))
@@ -1460,7 +1473,7 @@ def exchangeSys_special():
                             self.refresh_room()    # 重整頁面
 
             # 結算
-            def end(self):
+            def end(self , bankrupt=False):
                 # 避免錯誤
                 try:
                     self.sheet_of_room = NTU_Coin.worksheet('Room %s' % (self.room_number))
@@ -1510,9 +1523,20 @@ def exchangeSys_special():
                     self.point_list.append(self.user4_point)    # 加入分數清單
 
                     self.upload_record()    # 上傳紀錄
-                    NTU_Coin.del_worksheet(self.sheet_of_room)    # 刪除該房間的表單
-                    self.special_exchange_room.delete_rows(self.room.row)    # 刪除該房間的資訊
-                    special_exchange_page(self)    # 導回主畫面
+                    # 未破產
+                    if not bankrupt:
+                        # 分數歸零
+                        self.sheet_of_room.update('C%d' % (self.user_row), '0')
+                        self.sheet_of_room.update('C%d' % (self.user2_row), '0')
+                        self.sheet_of_room.update('C%d' % (self.user3_row), '0')
+                        self.sheet_of_room.update('C%d' % (self.user4_row), '0')
+                        tk.messagebox.showinfo(title='結算完畢', message='分數已歸零!')
+                        self.refresh_room()
+                    # 有使用者破產
+                    else:
+                        NTU_Coin.del_worksheet(self.sheet_of_room)    # 刪除該房間的表單
+                        self.special_exchange_room.delete_rows(self.room.row)    # 刪除該房間的資訊
+                        special_exchange_page(self)    # 導回特殊交換介面
 
             # 設定分錢介面
             def create_widgets_share(self):
@@ -1540,24 +1564,36 @@ def exchangeSys_special():
 
             # 離開房間
             def leave_room(self):
-                self.special_exchange_room = NTU_Coin.get_worksheet(3)    # 特殊交換的房間表單
-                self.sheet_of_room = NTU_Coin.worksheet('Room %s' % (self.room_number))       # 該房間的表單
-                self.account = self.sheet_of_room.col_values(1)[3:]       # 房間成員帳號名單
-                self.room = self.special_exchange_room.find(self.room_number)    # 該房間
-                self.user = self.sheet_of_room.find(self.user_account)           # 該使用者
-                self.people = int(self.special_exchange_room.cell(self.room.row, 6).value)    # 房間人數
-
-                # 房間只剩下自己
-                if len(self.account) == 1:
-                    NTU_Coin.del_worksheet(self.sheet_of_room)    # 刪除該房間的表單
-                    self.special_exchange_room.delete_rows(self.room.row)    # 刪除該房間的資訊
-                # 房間還有其他使用者
+                # 避免錯誤
+                try:
+                    self.sheet_of_room = NTU_Coin.worksheet('Room %s' % (self.room_number))
+                # 房間已被關閉
+                except Exception as error:
+                    self.refresh_room()
+                # 房間未被關閉
                 else:
-                    self.sheet_of_room.delete_rows(self.user.row)    # 刪除該使用者的資訊
-                    self.special_exchange_room.update_cell(self.room.row, 6, str(self.people - 1))    # 更新房間人數
-                    self.sheet_of_room.add_rows(0)
+                    self.special_exchange_room = NTU_Coin.get_worksheet(3)    # 特殊交換的房間表單
+                    self.sheet_of_room = NTU_Coin.worksheet('Room %s' % (self.room_number))       # 該房間的表單
+                    self.account = self.sheet_of_room.col_values(1)[3:]       # 房間成員帳號名單
+                    self.room = self.special_exchange_room.find(self.room_number)    # 該房間
+                    self.user = self.sheet_of_room.find(self.user_account)           # 該使用者
+                    self.people = int(self.special_exchange_room.cell(self.room.row, 6).value)    # 房間人數
 
-                special_exchange_page(self)    # 回到特殊交換系統
+                    # 房間只剩下自己
+                    if len(self.account) == 1:
+                        NTU_Coin.del_worksheet(self.sheet_of_room)    # 刪除該房間的表單
+                        self.special_exchange_room.delete_rows(self.room.row)    # 刪除該房間的資訊
+                    # 房間還有其他使用者
+                    else:
+                        self.sheet_of_room.delete_rows(self.user.row)    # 刪除該使用者的資訊
+                        self.special_exchange_room.update_cell(self.room.row, 6, str(self.people - 1))    # 更新房間人數
+                        self.sheet_of_room.add_rows(0)
+
+                    special_exchange_page(self)    # 回到特殊交換系統
+
+            # 還沒付錢，不能離開
+            def cant_leave(self):
+                tk.messagebox.showerror(title='無法離開房間', message='尚有餘款未結算')
 
             # 上傳紀錄
             def upload_record(self):
@@ -1567,10 +1603,7 @@ def exchangeSys_special():
                 spec = []    # 樣式清單
                 for point in self.point_list:
                     # 贏錢
-                    if eval(point) > 0:
-                        spec.append('spec+')
-                    # 沒輸沒贏
-                    elif eval(point) == 0:
+                    if int(point) >= 0:
                         spec.append('spec+')
                     # 輸錢
                     else:
@@ -2673,7 +2706,7 @@ def recordSys_getList(mode):
 
 def getBalance():
     scope = ["https://spreadsheets.google.com/feeds",'https://www.googleapis.com/auth/spreadsheets',"https://www.googleapis.com/auth/drive.file","https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_name("NTU Coin-0555c96087e3.json", scope)
+    creds = ServiceAccountCredentials.from_json_keyfile_name("NTU Coin-adba92770851.json", scope)
     client = gspread.authorize(creds)
     sheet = client.open("NTU Coin").get_worksheet(0)  # Open the spreadhseet
     balance = sheet.row_values(userInfo[0])[4]
@@ -2689,7 +2722,7 @@ def is_all_chinese(string):
 
 def getClient():
     scope = ["https://spreadsheets.google.com/feeds",'https://www.googleapis.com/auth/spreadsheets',"https://www.googleapis.com/auth/drive.file","https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_name("NTU Coin-0555c96087e3.json", scope)
+    creds = ServiceAccountCredentials.from_json_keyfile_name("NTU Coin-adba92770851.json", scope)
     client = gspread.authorize(creds)
     return client
 
