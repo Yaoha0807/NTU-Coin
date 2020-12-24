@@ -1976,7 +1976,7 @@ def taskSys_searchTask_taskOngoing():
 
     # 再加入用戶記錄
     global taskSys_searchTask_taskOngoing_ls
-    taskSys_searchTask_taskOngoing_ls = [["1", "跑腿", "20"], ["2", "幫搶課", "100"], ["3", "徵求高鐵票", "500"], ["4", "徵求水源單人房", "10000"], ["5", "徵求人陪吃飯嗚嗚嗚", "200"], ["6", "托福家教", "10000"], ["7", "醬油膏", "1"], ["8", "睡", "500"], ["9", "徵求人類幫忙簽到民概", "200"]]
+    taskSys_searchTask_taskOngoing_ls = taskSys_get_users_tasks()
     tplt = "{0:<8}      {1:{3}^10}    {2:>10}"
     for i, content in enumerate(taskSys_searchTask_taskOngoing_ls):
         taskOngoing_listbox.insert("end", tplt.format(content[0], content[1], content[2], chr(12288)))
@@ -1987,7 +1987,7 @@ def taskSys_searchTask_taskOngoing():
     taskOngoing_listbox.bind('<Double-Button-1>', lambda event, x = "ongoing": taskSys_showTaskDetails(event, x))
 
     # 雙擊查看更多信息
-    dbclick = tk.Label(taskSys_searchTask_taskOngoing_Win, text = "（雙擊可查看更多資信息）")
+    dbclick = tk.Label(taskSys_searchTask_taskOngoing_Win, text = "（雙擊可查看更多信息）")
     dbclick.config(bg = "#363636", fg = "white", font = "FangSong 16 bold")
     dbclick.place(anchor = "center", x = 512, y = 660)
 
@@ -2010,7 +2010,7 @@ def taskSys_showTaskDetails(event, mode):
         Img_taskSys_showTaskDetails_accept = tk.PhotoImage(file = "接受.png")
         acceptBtn = tk.Button(taskSys_showTaskDetailsWin)
         acceptBtn.config(image = Img_taskSys_showTaskDetails_accept, width = 72, height = 32)
-        acceptBtn.config(relief = "flat", cursor = "hand2", command = taskSys_showTaskDetailsWin.destroy)
+        acceptBtn.config(relief = "flat", cursor = "hand2", command =lambda x = index[0]: taskSys_accept_mission(x))
         acceptBtn.place(anchor = "center", x = 400, y = 150)
 
         # 拒絕按鍵
@@ -2044,7 +2044,7 @@ def taskSys_showTaskDetails(event, mode):
         Img_taskSys_showTaskDetails_giveUp = tk.PhotoImage(file = "放棄任務.png")
         giveUpBtn = tk.Button(taskSys_showTaskDetailsWin)
         giveUpBtn.config(image = Img_taskSys_showTaskDetails_giveUp, width = 152, height = 32)
-        giveUpBtn.config(relief = "flat", cursor = "hand2")
+        giveUpBtn.config(relief = "flat", cursor = "hand2", command = lambda x = index[0]: taskSys_abort_mission(x))
         giveUpBtn.place(anchor = "center", x = 624, y = 150)
     
     # 標題
@@ -2081,6 +2081,53 @@ def taskSys_get_all_tasks():
             lst = [ls[0], ls[2], ls[4]]
             display_list.append(lst)
     return display_list
+
+
+def taskSys_get_users_tasks():
+    client = getClient()
+    sheet = client.open("NTU Coin").worksheet("Missions")
+
+    accepter_account = userInfo[1]
+    display_list = []
+    for i in range(len(sheet.col_values(1))):
+        i +=1
+        accepter_in_list = sheet.cell(i,8).value
+        status = sheet.cell(i,6).value
+        if accepter_in_list == accepter_account and status == "taken":
+            mission_index = sheet.cell(i,1).value
+            mission_name = sheet.cell(i,3).value
+            mission_pay = sheet.cell(i,5).value
+            lst = [mission_index, mission_name, mission_pay]
+            display_list.append(lst)
+    return display_list
+
+
+def taskSys_accept_mission(mission_index):
+    client = getClient()
+    sheet = client.open("NTU Coin").worksheet("Missions")
+
+    accepter_account = userInfo[1]
+    #因為有mission_index所以就有一個任務裡面的所有要件了
+    sub_time_accept = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d %H:%M:%S')
+    row = sheet.find(mission_index).row
+    status = "taken"
+    sheet.update_cell(row,6,status)
+    sheet.update_cell(row,7,sub_time_accept)
+    sheet.update_cell(row,8,accepter_account)
+    ## 一旦標籤不是ongoing的時候，任務總覽裡面就不能有這任務
+    taskSysWin.destroy()
+
+
+def taskSys_abort_mission(mission_index):
+    client = getClient()
+    sheet = client.open("NTU Coin").worksheet("Missions")
+
+    mission_row = sheet.find(mission_index).row
+    if sheet.cell(mission_row, 6).value == "taken":
+        status = "on-going"
+        sheet.update_cell(mission_row, 6, status)
+        sheet.update_cell(mission_row, 8, "")
+    taskSysWin.destroy()
 
 
 def taskSys_get_tasks_details(mission_index):
@@ -2567,7 +2614,10 @@ def recordSys_getList(mode):
     data = []
     for i in (ExchangeRecords, SavingRecords, MissionRecords):
         for j in range(len(i)):
-            data.append(i[j])
+            if int(i[j].get("Amount")) == 0:
+                pass
+            else:
+                data.append(i[j])
 
     # print(data)
     # 更改日期格式
@@ -2592,7 +2642,7 @@ def recordSys_getList(mode):
     income_records = []  # 收入記錄
     payment_records = [] # 支出記錄
     for i in range(len(all_user_records)):
-        if all_user_records[i].get('Status') == 'norm-':
+        if all_user_records[i].get('Status') == 'norm-' or all_user_records[i].get("Status") == "spec-":
             payment_records.append(all_user_records[i])
         else:
             income_records.append(all_user_records[i])
@@ -2706,7 +2756,7 @@ def recordSys_getList(mode):
 
 def getBalance():
     scope = ["https://spreadsheets.google.com/feeds",'https://www.googleapis.com/auth/spreadsheets',"https://www.googleapis.com/auth/drive.file","https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_name("NTU Coin-adba92770851.json", scope)
+    creds = ServiceAccountCredentials.from_json_keyfile_name("NTU Coin-0555c96087e3.json", scope)
     client = gspread.authorize(creds)
     sheet = client.open("NTU Coin").get_worksheet(0)  # Open the spreadhseet
     balance = sheet.row_values(userInfo[0])[4]
@@ -2722,7 +2772,7 @@ def is_all_chinese(string):
 
 def getClient():
     scope = ["https://spreadsheets.google.com/feeds",'https://www.googleapis.com/auth/spreadsheets',"https://www.googleapis.com/auth/drive.file","https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_name("NTU Coin-adba92770851.json", scope)
+    creds = ServiceAccountCredentials.from_json_keyfile_name("NTU Coin-0555c96087e3.json", scope)
     client = gspread.authorize(creds)
     return client
 
