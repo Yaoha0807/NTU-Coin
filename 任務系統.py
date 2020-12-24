@@ -9,8 +9,10 @@ scope = ["https://spreadsheets.google.com/feeds",'https://www.googleapis.com/aut
 "https://www.googleapis.com/auth/drive.file","https://www.googleapis.com/auth/drive"]
 creds = ServiceAccountCredentials.from_json_keyfile_name(r"C:\Users\User\Desktop\GitHub\NTU-Coin\python-google-sheet-d3544b66f48e.json", scope)
 client = gspread.authorize(creds)
-sheet = client.open("NTU Coin").worksheet("Missions")
 
+sheet = client.open("NTU Coin").worksheet("Missions")
+user_info = client.open("NTU Coin").worksheet("User_Info")
+mission_records = client.open("NTU Coin").worksheet("Mission Record")
 
 # 新增任務
 def establish_mission(submitter_account, mission_name, mission_content, payment):
@@ -55,7 +57,6 @@ def finish_mission(mission_index):
         accounts_receivable = sheet.cell(row,5).value
         pay_time = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d %H:%M:%S')
 
-        user_info = client.open("NTU Coin").worksheet("User_Info")
         # 扣交付任務者錢
         user_info_row = user_info.find(provider).row
         balance = int(user_info.cell(user_info_row,5).value)
@@ -67,7 +68,6 @@ def finish_mission(mission_index):
         balance_accepter += int(accounts_receivable)
         user_info.update_cell(user_info_row_accept,5,balance_accepter)
 
-        mission_records = client.open("NTU Coin").worksheet("Mission Record")
         # 紀錄登錄
         index = len(mission_records.col_values(2))+1
         cred1 = [index, "norm-",provider, accepter,-int(accounts_payable), pay_time, mission_name, mission_content]
@@ -103,7 +103,8 @@ def click_accept_mission_from_lobby(mission_index):
 # 進入查看任務介面查看已接收任務
 def mission_inquiry(accepter_account):
     display_list = []
-    for i in range(len(col_values(1))):
+    for i in range(len(sheet.col_values(1))):
+        i +=1
         accepter_in_list = sheet.cell(i,8).value
         status = sheet.cell(i,6).value
         if accepter_in_list == accepter_account and status == "taken":
@@ -116,15 +117,14 @@ def mission_inquiry(accepter_account):
 
 # 從查看任務按了已接收的任務之後，回傳任務index,name,content,payment
 def click_accepted_mission_from_mission_inquiry(mission_index):
-    mission_index = str(mission_index)
     ficher = client.open("NTU Coin").worksheet("Missions")
     mission_row = ficher.find(mission_index).row
     index = ficher.cell(mission_row,1).value
+    name = ficher.cell(mission_row,3).value
     content = ficher.cell(mission_row,4).value
     payment = ficher.cell(mission_row,5).value
     lst = [index, name, content, payment]
     return lst
-
 # 放棄任務
 def abort_mission(mission_index):
     mission_row = sheet.find(mission_index).row
@@ -132,8 +132,6 @@ def abort_mission(mission_index):
         status = "on-going"
         sheet.update_cell(mission_row, 6, status)
         sheet.update_cell(mission_row, 8, "")
-    else:
-        print("error")
 
 # establish_mission("b09704063@ntu.edu.tw","不能用中文","不要用中文","10")
 # accept_mission("bb@ntu.edu.tw","13")
