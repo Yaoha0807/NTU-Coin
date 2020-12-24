@@ -1870,7 +1870,7 @@ def recordSys_getList(mode):
 
 def getBalance():
     scope = ["https://spreadsheets.google.com/feeds",'https://www.googleapis.com/auth/spreadsheets',"https://www.googleapis.com/auth/drive.file","https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_name("NTU Coin-0555c96087e3.json", scope)
+    creds = ServiceAccountCredentials.from_json_keyfile_name("NTU Coin-adba92770851.json", scope)
     client = gspread.authorize(creds)
     sheet = client.open("NTU Coin").get_worksheet(0)  # Open the spreadhseet
     balance = sheet.row_values(userInfo[0])[4]
@@ -1886,7 +1886,7 @@ def is_all_chinese(string):
 
 def getClient():
     scope = ["https://spreadsheets.google.com/feeds",'https://www.googleapis.com/auth/spreadsheets',"https://www.googleapis.com/auth/drive.file","https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_name("NTU Coin-0555c96087e3.json", scope)
+    creds = ServiceAccountCredentials.from_json_keyfile_name("NTU Coin-adba92770851.json", scope)
     client = gspread.authorize(creds)
     return client
 
@@ -1954,7 +1954,7 @@ def exchangeSys_special():
             self.lab_blank.grid(row=3, column=0, rowspan=38, sticky=tk.SW + tk.NE)
             self.widgets_list.append(self.lab_blank)           # 加入部件清單
 
-            ttk.Style().configure('Treeview.Heading', background='#363636', font=self.f_lab)
+            ttk.Style().configure('Treeview.Heading', background='#363636', foreground='white', font=self.f_lab)
             caption_columns = self.special_exchange_room.row_values(1)[1:7]    # 定義每一列
             self.room_sheet = ttk.Treeview(self, show='headings', columns=caption_columns, height=30)    # 房間表單
             # 調整列距
@@ -1977,8 +1977,10 @@ def exchangeSys_special():
                 people = room_info[5]         # 房間人數
                 people_limit = room_info[6]   # 房間人數上限
                 tmp = [mode, room_number, room_name, need_password_or_not, people, people_limit]
-                self.room_sheet.insert('', 'end', values=tmp, tags=('font'))
+                self.room_sheet.insert('', 'end', values=tmp, tags=('font', 'bg', 'fg'))
                 self.room_sheet.tag_configure('font', font=self.f_con)
+                self.room_sheet.tag_configure('bg', background='white')
+                self.room_sheet.tag_configure('fg', foreground='#363636')
                 self.room_sheet.grid(row=1, column=1, rowspan=40, sticky=tk.SW + tk.NE)
 
             self.scroll_bar = tk.Scrollbar(self)    # 滑動卷軸
