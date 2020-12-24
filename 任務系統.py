@@ -33,9 +33,9 @@ def accept_mission(accepter_account,mission_index):
     sub_time_accept = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d %H:%M:%S')
     row = sheet.find(mission_index).row
     status = "taken"
-    sheet.update_cell(row,6,status)
-    sheet.update_cell(row,7,sub_time_accept)
-    sheet.update_cell(row,8,accepter_account)
+    sheet.update_cell(row,6,status) #5
+    sheet.update_cell(row,7,sub_time_accept) #6
+    sheet.update_cell(row,8,accepter_account) #7
     ## 一旦標籤不是ongoing的時候，任務總覽裡面就不能有這任務
 
 # 完成任務
@@ -43,18 +43,19 @@ def finish_mission(mission_index):
     # 要餵mission index給這個函數，因為一個人可以同時具有多個正在執行的任務。挑選到要提交的任務之後傳出mission index由此接收
     sub_time_finish = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d %H:%M:%S')
     row = sheet.find(mission_index).row
+    row_list = sheet.row_values(row)
     status = "finished"
     sheet.update_cell(row,6,status)
     sheet.update_cell(row,7,sub_time_finish)
     def pay(mission_index):
         # 將交易開始與結束移轉到紀錄系統
         # 將交易金額記錄到使用者即時資料庫
-        mission_name = sheet.cell(row,3).value
-        mission_content = sheet.cell(row,4).value
-        provider = sheet.cell(row,2).value
-        accepter = sheet.cell(row,8).value
-        accounts_payable = sheet.cell(row,5).value
-        accounts_receivable = sheet.cell(row,5).value
+        mission_name = row_list[2]
+        mission_content = row_list[3]
+        provider = row_list[1]
+        accepter = row_list[7]
+        accounts_payable = row_list[4]
+        accounts_receivable = row_list[4]
         pay_time = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d %H:%M:%S')
 
         # 扣交付任務者錢
@@ -80,13 +81,14 @@ def finish_mission(mission_index):
 # 準備好介面所需資訊給任務介面
 def quest_summary_info():
     display_list = []
-    mission_summary = client.open("NTU Coin").worksheet("Mission")
+    mission_summary = client.open("NTU Coin").worksheet("Missions")
     for i in range(mission_summary.row_count):
-        if mission_summary.cell(i,6) == 'on-going':
-            time = mission_summary.cell(i,7).value
-            account = mission_summary.cell(i,1).value
-            task = mission_summary.cell(i,2).value
-            coins = mission_summary.cell(i,5).value
+        row_list = mission_summary.row_values(i)
+        if row_list[5] == 'on-going':
+            time = row_list[6]
+            account = row_list[1]
+            task = row_list[2]
+            coins = row_list[4]
             lst = [time, account, task, coins]
             display_list.append(lst)
     return display_list
@@ -95,9 +97,10 @@ def click_accept_mission_from_lobby(mission_index):
     mission_index = str(mission_index)
     ficher = client.open("NTU Coin").worksheet("Missions")
     mission_row = ficher.find(mission_index).row
-    index = ficher.cell(mission_row,1).value
-    content = ficher.cell(mission_row,4).value
-    payment = ficher.cell(mission_row,5).value
+    row_list = ficher.row_values(mission_row)
+    index = row_list[0]
+    content = row_list[3]
+    payment = row_list[4]
     lst = [index, content, payment]
     return lst
 # 進入查看任務介面查看已接收任務
@@ -105,12 +108,13 @@ def mission_inquiry(accepter_account):
     display_list = []
     for i in range(len(sheet.col_values(1))):
         i +=1
-        accepter_in_list = sheet.cell(i,8).value
-        status = sheet.cell(i,6).value
+        row_list = sheet.row_values(i)
+        accepter_in_list = row_list[7]
+        status = row_list[5]
         if accepter_in_list == accepter_account and status == "taken":
-            mission_index = sheet.cell(i,1).value
-            mission_name = sheet.cell(i,3).value
-            mission_pay = sheet.cell(i,5).value
+            mission_index = row_list[0]
+            mission_name = row_list[2] 
+            mission_pay = row_list[4] 
             lst = [mission_index, mission_name, mission_pay]
             display_list.append(lst)
     return display_list
@@ -119,16 +123,18 @@ def mission_inquiry(accepter_account):
 def click_accepted_mission_from_mission_inquiry(mission_index):
     ficher = client.open("NTU Coin").worksheet("Missions")
     mission_row = ficher.find(mission_index).row
-    index = ficher.cell(mission_row,1).value
-    name = ficher.cell(mission_row,3).value
-    content = ficher.cell(mission_row,4).value
-    payment = ficher.cell(mission_row,5).value
+    row_list = ficher.row_values(mission_row)
+    index = row_list[0] #0
+    name = row_list[2] #2
+    content = row_list[3] #3
+    payment = row_list[4] #4
     lst = [index, name, content, payment]
     return lst
 # 放棄任務
 def abort_mission(mission_index):
     mission_row = sheet.find(mission_index).row
-    if sheet.cell(mission_row, 6).value == "taken":
+    row_list = sheet.row_values(mission_row)
+    if row_list[5] == "taken":
         status = "on-going"
         sheet.update_cell(mission_row, 6, status)
         sheet.update_cell(mission_row, 8, "")
