@@ -278,6 +278,11 @@ def checkSignUpInfo():
     password2 = signUp_confirmText.get()
     userName = signUp_userText.get()
     state = []  # 最後用來判斷有無錯誤發生
+    mW.set("")
+    p1W.set("")
+    p2W.set("")
+    nW.set("")
+    tW.set("")
     # 印出錯誤信息
     if mail == "":
         mW.set("❕ 此欄不得為空")
@@ -331,11 +336,16 @@ def checkSignUpInfo():
     if signUp_transactionText.get() == "":
         tW.set("❕ 此欄不得為空")
     else:
-        if len(signUp_transactionText.get()) != 8:
-            tW.set("❕ 交易密碼不符合規範")
-        else:
-            tW.set("")
-            state.append(0)
+        try:
+            data = eval(signUp_transactionText.get())
+            if len(signUp_transactionText.get()) != 8:
+                tW.set("❕ 交易密碼不符合規範")
+            else:
+                tW.set("")
+                state.append(0)
+        except:
+            tW.set("❕ 請輸入數字")
+
     if len(state) == 5: # 若回傳四個0即代表五個欄位都符合規格
         ls = [str(numRows + 1), signUp_mailText.get(), signUp_passwordText.get(), signUp_userText.get(), "0", signUp_transactionText.get()]
         sheet.append_row(ls, table_range="A{}".format(numRows + 1))
