@@ -1953,7 +1953,7 @@ def taskSys_searchTask_taskOverview():
     taskOverview_listbox.bind('<Double-Button-1>', lambda event, x = "all": taskSys_showTaskDetails(event, x))
 
     # 雙擊查看更多信息
-    dbclick = tk.Label(taskSys_searchTask_taskOverview_Win, text = "（雙擊可查看更多信息）")
+    dbclick = tk.Label(taskSys_searchTask_taskOverview_Win, text = "（雙擊可查看更多資訊）")
     dbclick.config(bg = "#363636", fg = "white", font = "FangSong 16 bold")
     dbclick.place(anchor = "center", x = 512, y = 660)
 
@@ -2015,7 +2015,7 @@ def taskSys_searchTask_taskOngoing():
     taskOngoing_listbox.bind('<Double-Button-1>', lambda event, x = "ongoing": taskSys_showTaskDetails(event, x))
 
     # 雙擊查看更多信息
-    dbclick = tk.Label(taskSys_searchTask_taskOngoing_Win, text = "（雙擊可查看更多信息）")
+    dbclick = tk.Label(taskSys_searchTask_taskOngoing_Win, text = "（雙擊可查看更多資訊）")
     dbclick.config(bg = "#363636", fg = "white", font = "FangSong 16 bold")
     dbclick.place(anchor = "center", x = 512, y = 660)
 
