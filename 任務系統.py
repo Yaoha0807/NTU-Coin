@@ -137,7 +137,7 @@ def abort_mission(mission_index):
     if row_list[5] == "taken":
         status = "on-going"
         sheet.update_cell(mission_row, 6, status)
-        sheet.update_cell(mission_row, 8, "")
+        sheet.update_cell(mission_row, 8, "N/A")
 
 # establish_mission("b09704063@ntu.edu.tw","不能用中文","不要用中文","10")
 # accept_mission("bb@ntu.edu.tw","13")
