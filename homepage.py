@@ -1131,7 +1131,7 @@ def exchangeSys_special():
                 self.radioValue = tk.IntVar()
                 self.room_mode1 = tk.Radiobutton(self, text='麻將', variable=self.radioValue, value=1, command=self.choose_mode, font=self.f_lab, activebackground = "#363636", activeforeground	= "white", selectcolor = "#5C5C5C")    # 房間模式-麻將
                 self.room_mode2 = tk.Radiobutton(self, text='分錢', variable=self.radioValue, value=2, command=self.choose_mode, font=self.f_lab, activebackground = "#363636", activeforeground	= "white", selectcolor = "#5C5C5C")    # 房間模式-分錢
-                self.room_mode = ''    # 預設為無
+                self.room_mode = '分錢'    # 預設為分錢
                 self.lab_room_mode.grid(row=7, column=1, sticky=tk.SE + tk.NW)
                 self.room_mode1.grid(row=8, column=1, sticky=tk.SE + tk.NW)
                 self.room_mode2.grid(row=9, column=1, sticky=tk.SE + tk.NW)
@@ -1377,7 +1377,8 @@ def exchangeSys_special():
 
                 for point in self.point_ordered:
                     # 還有分數未結算
-                    if not str(point) == ('0' or ''):
+                    if not (str(point) == '0' or str(point) == ''):
+                        print(self.point_ordered, point)
                         self.command = self.cant_leave
                         break
                     # 分數皆為0
@@ -2804,7 +2805,7 @@ def recordSys_getList(mode):
 
 def getBalance():
     scope = ["https://spreadsheets.google.com/feeds",'https://www.googleapis.com/auth/spreadsheets',"https://www.googleapis.com/auth/drive.file","https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_name("NTU Coin-0555c96087e3.json", scope)
+    creds = ServiceAccountCredentials.from_json_keyfile_name("NTU Coin-adba92770851.json", scope)
     client = gspread.authorize(creds)
     sheet = client.open("NTU Coin").get_worksheet(0)  # Open the spreadhseet
     balance = sheet.row_values(userInfo[0])[4]
@@ -2820,7 +2821,7 @@ def is_all_chinese(string):
 
 def getClient():
     scope = ["https://spreadsheets.google.com/feeds",'https://www.googleapis.com/auth/spreadsheets',"https://www.googleapis.com/auth/drive.file","https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_name("NTU Coin-0555c96087e3.json", scope)
+    creds = ServiceAccountCredentials.from_json_keyfile_name("NTU Coin-adba92770851.json", scope)
     client = gspread.authorize(creds)
     return client
 
