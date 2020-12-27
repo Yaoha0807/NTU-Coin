@@ -1523,6 +1523,8 @@ def exchangeSys_special():
                     self.update_user_balance = int(self.user_balance) + int(self.user_point)
                     sheet.update_cell(self.user_info_row, 5, str(self.update_user_balance))
                     self.point_list.append(self.user_point)    # 加入分數清單
+                    # 更新房間內的使用者帳戶餘額
+                    self.sheet_of_room.update_cell(self.user_row, 4, str(self.update_user_balance))
 
                     # 更新其他使用者之帳戶餘額
                     self.user2_row = self.sheet_of_room.find(self.member_ordered[1]).row    # 使用者二帳號位置
@@ -1533,6 +1535,8 @@ def exchangeSys_special():
                     self.update_user2_balance = int(self.user2_balance) + int(self.user2_point)
                     sheet.update_cell(self.user2_info_row, 5, str(self.update_user2_balance))
                     self.point_list.append(self.user2_point)    # 加入分數清單
+                    # 更新房間內的使用者帳戶餘額
+                    self.sheet_of_room.update_cell(self.user2_row, 4, str(self.update_user2_balance))
 
                     self.user3_row = self.sheet_of_room.find(self.member_ordered[2]).row    # 使用者三帳號位置
                     self.user3_balance = self.sheet_of_room.acell('D%d' % (self.user3_row)).value    # 使用者三帳戶餘額
@@ -1542,6 +1546,8 @@ def exchangeSys_special():
                     self.update_user3_balance = int(self.user3_balance) + int(self.user3_point)
                     sheet.update_cell(self.user3_info_row, 5, str(self.update_user3_balance))
                     self.point_list.append(self.user3_point)    # 加入分數清單
+                    # 更新房間內的使用者帳戶餘額
+                    self.sheet_of_room.update_cell(self.user3_row, 4, str(self.update_user3_balance))
 
                     self.user4_row = self.sheet_of_room.find(self.member_ordered[3]).row    # 使用者四帳號位置
                     self.user4_balance = self.sheet_of_room.acell('D%d' % (self.user4_row)).value    # 使用者四帳戶餘額
@@ -1551,6 +1557,8 @@ def exchangeSys_special():
                     self.update_user4_balance = int(self.user4_balance) + int(self.user4_point)
                     sheet.update_cell(self.user4_info_row, 5, str(self.update_user4_balance))
                     self.point_list.append(self.user4_point)    # 加入分數清單
+                    # 更新房間內的使用者帳戶餘額
+                    self.sheet_of_room.update_cell(self.user4_row, 4, str(self.update_user4_balance))
 
                     self.upload_record()    # 上傳紀錄
                     # 未破產
@@ -1639,10 +1647,10 @@ def exchangeSys_special():
                     else:
                         spec.append('spec-')
 
-                row1 = [str(num_rows + 1), spec[0], self.user_account, '', self.user_point, self.user_balance, self.end_time, '麻將']
-                row2 = [str(num_rows + 2), spec[1], self.user2_account, '', self.user2_point, self.user2_balance, self.end_time, '麻將']
-                row3 = [str(num_rows + 3), spec[2], self.user3_account, '', self.user3_point, self.user3_balance, self.end_time, '麻將']
-                row4 = [str(num_rows + 4), spec[3], self.user4_account, '', self.user4_point, self.user4_balance, self.end_time, '麻將']
+                row1 = [str(num_rows + 1), spec[0], self.user_account, '', self.user_point, self.update_user_balance, self.end_time, '麻將']
+                row2 = [str(num_rows + 2), spec[1], self.user2_account, '', self.user2_point, self.update_user2_balance, self.end_time, '麻將']
+                row3 = [str(num_rows + 3), spec[2], self.user3_account, '', self.user3_point, self.update_user3_balance, self.end_time, '麻將']
+                row4 = [str(num_rows + 4), spec[3], self.user4_account, '', self.user4_point, self.update_user4_balance, self.end_time, '麻將']
                 insert_rows = [row1, row2, row3, row4]
                 self.exchange_record_sheet.append_rows(insert_rows)    # 新增紀錄
 
