@@ -20,7 +20,7 @@ rawMission = crawler(5)
 # 將各張worksheet的資料加上屬於該worksheet的類別
 def add_category(records, category_name):
   for i in range(len(records)):
-    records[i]['category'] = category_name
+    records[i]['Category'] = category_name
   return records
 
 ExchangeRecords = add_category(rawExchange, '貨幣交換')
@@ -30,8 +30,11 @@ MissionRecords = add_category(rawMission, '任務記錄')
 # 將各張worksheet的資料合併為一個list
 data = []
 for i in (ExchangeRecords, SavingRecords, MissionRecords):
-  for j in range(len(i)):
-    data.append(i[j])
+    for j in range(len(i)):
+        if int(i[j].get('Amount')) == 0:
+            pass
+        else:
+            data.append(i[j])
 
 
 # 更改日期格式
@@ -56,7 +59,7 @@ all_user_records.sort(key=lambda all_user_records:all_user_records["Time"])
 income_records = []  # 收入記錄
 payment_records = [] # 支出記錄
 for i in range(len(all_user_records)):
-    if all_user_records[i].get('Status') == 'norm-':
+    if all_user_records[i].get('Status') == 'norm-' or all_user_records[i].get('Status') == 'spec-':
         payment_records.append(all_user_records[i])
     else:
         income_records.append(all_user_records[i])
@@ -134,7 +137,7 @@ for i in (income_records, payment_records):
     if button2 == '儲值記錄':
         selected.append(category_records)
     else:
-        if button3 == '1':
+        if button3 == '-無-':
             selected.append(category_records)
         else:
             key_records = select_key(category_records, button3, button4)
